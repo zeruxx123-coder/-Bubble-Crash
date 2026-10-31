@@ -1,0 +1,1668 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bubble Crash — играй и забирай</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-1:#04070d;--bg-2:#0a1019;--bg-3:#070b13;
+  --text:#eef3f9;--muted:#8b96a8;--dim:#5b6678;
+  --accent:#5eb8d4;--accent-hi:#7ed4ee;
+  --green:#4ade80;--red:#f87171;--gold:#fbbf24;--purple:#a78bfa;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --smooth:cubic-bezier(.25,.46,.45,.94);
+  --sheet:cubic-bezier(.32,.72,0,1);
+}
+html,body{height:100%}
+body{
+  background:#04070d;color:var(--text);
+  font:14px/1.5 'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  font-weight:500;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden;min-height:100vh;position:relative;
+}
+#globalBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+.app-layer{position:relative;z-index:2}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;outline:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
+input,textarea,select{font:inherit;color:inherit;outline:none;font-family:inherit}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}.dim{color:var(--dim)}.tiny{font-size:11px}.center{text-align:center}
+.row{display:flex;align-items:center}.between{justify-content:space-between}.gap{gap:8px;flex-wrap:wrap}
+
+.ico{width:16px;height:16px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .4s var(--smooth),transform .5s var(--spring)}
+.ico-lg{width:20px;height:20px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 18px;border-radius:12px;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  color:var(--text);font-weight:600;font-size:13px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(20px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
+  transition:all .45s var(--spring);
+}
+.btn:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
+.btn:active{transform:translateY(0) scale(.96);transition-duration:.15s}
+.btn.primary{
+  background:linear-gradient(180deg,#5eb8d4,#3d9bb8);
+  border-color:rgba(126,212,238,0.6);color:#051018;font-weight:700;
+  box-shadow:0 4px 16px rgba(94,184,212,0.35),inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.btn.primary:hover{background:linear-gradient(180deg,#7ed4ee,#4eb0cc);transform:translateY(-3px) scale(1.02)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;animation:none}
+.btn.w100{width:100%}.btn.big{padding:15px;font-size:15px;font-weight:700;border-radius:14px}
+.btn.danger{background:rgba(248,113,113,0.12);border-color:rgba(248,113,113,0.3);color:var(--red)}
+.btn.danger:hover{background:rgba(248,113,113,0.2)}
+.btn.ok{background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.35);color:var(--green)}
+.btn.ok:hover{background:rgba(74,222,128,0.22)}
+.mini{padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;font-weight:600;color:var(--muted);transition:all .4s var(--smooth)}
+.mini:hover{color:var(--text);background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);transform:scale(1.05)}
+
+.inp{width:100%;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text);font-weight:500;font-size:14px;backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);transition:all .5s var(--smooth)}
+.inp:focus{background:rgba(255,255,255,0.06);border-color:rgba(94,184,212,0.5);box-shadow:0 0 0 4px rgba(94,184,212,0.12);transform:scale(1.005)}
+textarea.inp{resize:vertical;min-height:80px}
+select.inp{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b96a8' stroke-width='2' stroke-linecap='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.lbl{display:block;font-size:11px;color:var(--muted);margin:14px 0 6px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.check{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:13px;color:rgba(238,243,249,0.85);cursor:pointer;user-select:none;font-weight:500;transition:color .3s var(--smooth)}
+.check:hover{color:#fff}
+.check input{appearance:none;width:20px;height:20px;border-radius:7px;border:1.5px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.04);position:relative;cursor:pointer;flex:0 0 auto;transition:all .45s var(--spring)}
+.check input:checked{background:var(--accent);border-color:var(--accent);box-shadow:0 0 12px rgba(94,184,212,0.5);transform:scale(1.05)}
+.check input:checked::after{content:"";position:absolute;left:6px;top:1px;width:5px;height:10px;border-right:2px solid #051018;border-bottom:2px solid #051018;transform:rotate(45deg) scale(0);animation:checkIn .45s var(--spring) forwards}
+@keyframes checkIn{0%{transform:rotate(45deg) scale(0)}60%{transform:rotate(45deg) scale(1.3)}100%{transform:rotate(45deg) scale(1)}}
+
+.auth{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.auth-stage{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;max-width:400px;animation:stageIn 1.2s var(--sheet) both}
+@keyframes stageIn{from{opacity:0;transform:translateY(32px) scale(.94);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+.auth-logo{text-align:center;animation:logoFloat 6s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.auth-logo-text{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--text)}
+.auth-logo-text span{color:var(--accent);transition:color .5s var(--smooth)}
+.auth-logo-sub{margin-top:10px;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.auth-card{position:relative;width:100%;background:rgba(255,255,255,0.035);backdrop-filter:blur(40px) saturate(160%);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:6px;box-shadow:0 24px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08);overflow:hidden;animation:cardIn 1.1s var(--sheet) both;animation-delay:.2s}
+@keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.94);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+.auth-tabs{position:relative;display:flex;gap:2px;background:rgba(0,0,0,0.2);border-radius:14px;padding:4px;margin:6px 6px 0}
+.auth-tabs button{position:relative;z-index:2;flex:1;padding:11px 10px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);transition:color .5s var(--smooth)}
+.auth-tabs button.on{color:#051018}
+.auth-tabs button:hover:not(.on){color:var(--text)}
+.auth-tab-slider{position:absolute;top:4px;left:4px;height:calc(100% - 8px);width:calc(50% - 5px);background:linear-gradient(180deg,var(--accent-hi),var(--accent));border-radius:10px;z-index:1;transition:transform .55s var(--spring);box-shadow:0 2px 12px rgba(94,184,212,0.4),inset 0 1px 0 rgba(255,255,255,0.4)}
+.auth-tab-slider.right{transform:translateX(calc(100% + 2px))}
+.auth-form{padding:20px 18px 22px;animation:formIn .6s var(--smooth) both}
+@keyframes formIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.auth-field{position:relative;margin-bottom:12px}
+.auth-field .field-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none;z-index:1;transition:all .4s var(--spring)}
+.auth-field:focus-within .field-icon{color:var(--accent-hi);transform:translateY(-50%) scale(1.1)}
+.auth-input{width:100%;padding:14px 44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;font-weight:500;color:var(--text);transition:all .5s var(--smooth)}
+.auth-input::placeholder{color:rgba(139,150,168,0.6)}
+.auth-input:focus{background:rgba(255,255,255,0.06);border-color:rgba(94,184,212,0.5);box-shadow:0 0 0 4px rgba(94,184,212,0.12)}
+.field-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:6px;border-radius:8px;color:var(--dim);transition:all .4s var(--smooth);z-index:1}
+.field-toggle:hover{color:var(--text);background:rgba(255,255,255,0.05);transform:translateY(-50%) scale(1.1)}
+.auth-submit{position:relative;margin-top:6px;padding:15px;border-radius:12px;font-size:14px;font-weight:700;overflow:hidden;background:linear-gradient(180deg,var(--accent-hi),var(--accent));color:#051018;border:none;box-shadow:0 6px 20px rgba(94,184,212,0.35),inset 0 1px 0 rgba(255,255,255,0.4);transition:all .5s var(--smooth)}
+.auth-submit:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 12px 32px rgba(94,184,212,0.5),inset 0 1px 0 rgba(255,255,255,0.5)}
+.auth-hint{margin-top:14px;font-size:12.5px;text-align:center;color:var(--muted);font-weight:500}
+.auth-hint a{color:var(--accent-hi);text-decoration:none;font-weight:600;transition:color .4s var(--smooth)}
+.auth-hint a:hover{color:#fff}
+.err{color:#fecaca;font-size:13px;font-weight:500;background:rgba(220,38,38,0.12);border:1px solid rgba(248,113,113,0.3);padding:10px 14px;border-radius:12px;margin:10px 18px 0}
+
+.top{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;padding:12px 20px;background:rgba(4,7,13,0.75);backdrop-filter:blur(30px) saturate(160%);border-bottom:1px solid rgba(255,255,255,0.06)}
+.brand{font-weight:800;font-size:17px;letter-spacing:-.02em;flex:0 0 auto;color:var(--text)}
+.brand i{font-style:normal;color:var(--accent)}
+.nav{display:flex;gap:2px;overflow:auto;flex:1;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;transition:all .45s var(--smooth);border:1px solid transparent}
+.nav button:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav button.on{background:rgba(94,184,212,0.12);color:var(--accent-hi);border-color:rgba(94,184,212,0.25);font-weight:600}
+.nav .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:99px;background:var(--red);color:#fff;font-size:10px;font-weight:700;line-height:16px;margin-left:6px;text-align:center}
+.top-right{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.bal{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.bal strong{font-size:15px;font-weight:700;color:var(--accent-hi);font-variant-numeric:tabular-nums}
+.bal strong.bump{animation:bump .6s var(--spring)}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18);color:#fff}100%{transform:scale(1)}}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:#051018;border:1px solid rgba(255,255,255,0.2);transition:all .5s var(--spring);overflow:hidden}
+.avatar:hover{transform:scale(1.1);box-shadow:0 0 20px rgba(94,184,212,0.4)}
+
+.wrap{max-width:1220px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
+.panel{background:rgba(255,255,255,0.035);backdrop-filter:blur(30px) saturate(160%);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);animation:panelIn .8s var(--sheet) both;position:relative;overflow:hidden}
+@keyframes panelIn{from{opacity:0;transform:translateY(20px) scale(.97);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:14px}
+.hr{height:1px;background:rgba(255,255,255,0.06);margin:16px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.game-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+@media(max-width:920px){.grid2,.game-grid{grid-template-columns:1fr}}
+
+.stage-card{position:relative;overflow:hidden;padding:0}
+.stage-card.shake{animation:shakeX 1.15s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shakeX{0%{transform:translate(0,0)}10%{transform:translate(-3px,1px)}22%{transform:translate(4px,-1px)}35%{transform:translate(-3px,1px)}50%{transform:translate(2px,-1px)}65%{transform:translate(-1px,1px)}80%{transform:translate(1px,-1px)}100%{transform:none}}
+.stage-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:20px 22px 16px}
+.mult{font-size:clamp(38px,6.5vw,62px);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;color:var(--text);transition:color .5s var(--smooth),text-shadow .5s var(--smooth),transform .5s var(--spring);transform-origin:left center;will-change:transform,text-shadow}
+.mult.hot{color:var(--accent-hi);text-shadow:0 0 40px rgba(94,184,212,0.5)}
+.mult.dead{color:var(--red);animation:deadDrop 1.2s var(--spring)}
+@keyframes deadDrop{0%{transform:scale(1.15) rotate(-2deg);opacity:.7}50%{transform:scale(1.03) rotate(1deg);opacity:.9}100%{transform:scale(1) rotate(0);opacity:1}}
+.state{font-size:13px;color:var(--muted);margin-top:8px;font-weight:500}
+.canvas-box{position:relative;height:clamp(280px,44vh,440px);margin:0 12px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#04070d 0%,#0a1019 60%,#070b13 100%);border:1px solid rgba(255,255,255,0.06);box-shadow:inset 0 1px 20px rgba(0,0,0,0.5)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.crash-flash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),rgba(126,212,238,0.5) 0%,rgba(94,184,212,0.25) 20%,rgba(94,184,212,0.08) 45%,transparent 70%)}
+.crash-flash.go{animation:cflash 2s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes cflash{0%{opacity:0;transform:scale(.5)}12%{opacity:1;transform:scale(1)}45%{opacity:.5;transform:scale(1.15)}100%{opacity:0;transform:scale(1.3)}}
+.crash-tag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:clamp(18px,3.5vw,26px);font-weight:800;letter-spacing:.25em;color:var(--red);animation:tagIn 1.2s var(--spring) both;text-shadow:0 0 40px rgba(248,113,113,0.7);padding:14px 28px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.35);backdrop-filter:blur(20px);text-transform:uppercase}
+@keyframes tagIn{0%{transform:translate(-50%,-50%) scale(.4);opacity:0;filter:blur(12px)}45%{transform:translate(-50%,-50%) scale(1.15);opacity:.95;filter:blur(0)}70%{transform:translate(-50%,-50%) scale(.97)}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.crash-wave{position:absolute;left:50%;top:50%;width:0;height:0;border-radius:50%;pointer-events:none;border:1.5px solid rgba(94,184,212,0.7);transform:translate(-50%,-50%);box-shadow:0 0 20px rgba(94,184,212,0.4);animation:waveExpand 2.5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes waveExpand{0%{width:10px;height:10px;opacity:.9;border-width:2px}50%{width:340px;height:340px;opacity:.4;border-width:1px}100%{width:720px;height:720px;opacity:0;border-width:.3px}}
+.pop-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;bottom:32%;font-weight:700;color:var(--accent-hi);font-size:14px;text-shadow:0 0 20px rgba(94,184,212,0.8);white-space:nowrap;padding:8px 16px;border-radius:10px;background:rgba(94,184,212,0.15);border:1px solid rgba(94,184,212,0.3);backdrop-filter:blur(8px)}
+.cdbar{height:3px;background:rgba(0,0,0,0.4);margin:14px 22px 18px;border-radius:99px;overflow:hidden}
+.cdbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-hi));width:100%;border-radius:99px;transition:width .4s linear;box-shadow:0 0 8px rgba(94,184,212,0.5)}
+.hintstrip{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin:0 22px 18px;font-weight:500}
+.hintstrip b{color:var(--muted);font-weight:600}
+.hist{display:flex;gap:5px;overflow:hidden;margin-top:4px;flex:0 0 auto}
+.hist span{flex:0 0 auto;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,0.1);color:var(--muted);background:rgba(255,255,255,0.03);font-variant-numeric:tabular-nums}
+.hist span.mid{color:var(--accent-hi);border-color:rgba(94,184,212,0.3);background:rgba(94,184,212,0.08)}
+.hist span.hi{color:#051018;background:linear-gradient(180deg,var(--accent-hi),var(--accent));border-color:var(--accent-hi);font-weight:700}
+
+.side{display:flex;flex-direction:column;gap:12px}
+.input-row{display:flex;gap:6px;align-items:center}
+.input-row .inp{flex:1;min-width:0;font-variant-numeric:tabular-nums;font-weight:600}
+.suffix{color:var(--muted);font-size:13px;font-weight:600;flex:0 0 auto;padding:0 4px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:10px 0}
+.chips button{padding:8px 0;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:600;color:var(--muted);transition:all .45s var(--spring)}
+.chips button:hover{color:var(--text);border-color:rgba(94,184,212,0.4);background:rgba(94,184,212,0.1);transform:translateY(-2px) scale(1.05)}
+.betrow{display:grid;grid-template-columns:1fr 90px 140px;gap:8px;padding:10px 12px;border-radius:10px;font-size:13px;align-items:center;transition:background .4s var(--smooth)}
+.betrow:nth-child(odd){background:rgba(255,255,255,0.02)}
+.betrow.me{background:rgba(94,184,212,0.08);box-shadow:inset 0 0 0 1px rgba(94,184,212,0.25)}
+.betrow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.betrow .amt{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.betrow .st{text-align:right;font-size:11px;font-variant-numeric:tabular-nums;font-weight:600}
+.win{color:var(--green);font-weight:700}.lose{color:var(--dim);font-weight:600}.live{color:var(--muted);font-weight:600}
+.bets-list{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow:auto}
+.bets-list::-webkit-scrollbar{width:6px}
+.bets-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:99px}
+
+.big-bal{font-size:38px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--accent-hi)}
+.bar{height:6px;border-radius:99px;background:rgba(0,0,0,0.4);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-hi));width:0;transition:width 1.2s var(--sheet);border-radius:99px}
+.req{white-space:pre-wrap;font:inherit;color:rgba(238,243,249,0.85);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;margin:0 0 8px;font-weight:500}
+.txlist{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow:auto}
+.txlist::-webkit-scrollbar{width:6px}
+.txlist::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:99px}
+.tx{display:grid;grid-template-columns:56px 1fr auto;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;align-items:center;transition:background .4s var(--smooth)}
+.tx:nth-child(odd){background:rgba(255,255,255,0.02)}
+.tx .amt{font-weight:700;font-variant-numeric:tabular-nums}
+.tx .plus{color:var(--green)}.tx .minus{color:var(--dim)}
+.empty{color:var(--dim);font-size:13px;padding:20px;text-align:center;font-weight:500}
+
+.tbl-wrap{overflow:auto;border-radius:12px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 8px;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;white-space:nowrap}
+.tbl td{padding:11px 8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;font-weight:500;transition:background .3s var(--smooth)}
+.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;border:1px solid rgba(255,255,255,0.15);font-size:11px;color:var(--muted);font-weight:600}
+.pill.off{color:var(--dim);border-color:rgba(255,255,255,0.08)}
+.pill.bad{color:#051018;background:var(--red);border-color:var(--red)}
+.pill.wait{color:var(--gold);border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.08)}
+.pill.ok{color:var(--green);border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.08)}
+.pill.info{color:var(--accent-hi);border-color:rgba(94,184,212,0.3);background:rgba(94,184,212,0.08)}
+
+.tk{padding:14px 16px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .45s var(--spring);background:rgba(255,255,255,0.02)}
+.tk:hover{border-color:rgba(94,184,212,0.3);background:rgba(255,255,255,0.05);transform:translateX(4px)}
+.tk.on{border-color:rgba(94,184,212,0.5);background:rgba(94,184,212,0.08);transform:translateX(4px)}
+.msgs{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.msg{padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);max-width:82%;font-weight:500}
+.msg.staff{margin-left:auto;background:rgba(94,184,212,0.1);border-color:rgba(94,184,212,0.25)}
+.msg .who{font-size:10.5px;color:var(--dim);margin-bottom:4px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.thread-head{font-weight:700;font-size:15px;color:var(--accent-hi)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.tabs button{padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--muted);border:1px solid transparent;transition:all .4s var(--smooth)}
+.tabs button:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.tabs button.on{background:rgba(94,184,212,0.12);color:var(--accent-hi);border-color:rgba(94,184,212,0.25)}
+
+.req-card{border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,0.03);transition:all .4s var(--smooth)}
+.req-card.pending{border-left:3px solid var(--gold)}
+.req-card.approved{border-left:3px solid var(--green)}
+.req-card.rejected{border-left:3px solid var(--red)}
+.req-card .rc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.req-card .rc-title{font-weight:700;font-size:14px}
+.req-card .rc-meta{font-size:11.5px;color:var(--muted);line-height:1.7;font-weight:500}
+.req-card .rc-meta b{color:var(--text);font-weight:600}
+.req-card .rc-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+
+.toast{position:fixed;left:50%;top:80px;transform:translate(-50%,-30px) scale(.9);opacity:0;padding:12px 20px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);font-size:13px;font-weight:600;color:var(--text);z-index:300;backdrop-filter:blur(30px) saturate(160%);box-shadow:0 10px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.1);transition:opacity .5s var(--smooth),transform .5s var(--spring);pointer-events:none;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+
+.modal{position:fixed;inset:0;z-index:250;display:grid;place-items:center;background:rgba(4,7,13,0.6);backdrop-filter:blur(10px);padding:20px;animation:fadeIn .5s var(--smooth)}
+.modal-card{width:100%;max-width:460px;background:rgba(15,22,35,0.9);backdrop-filter:blur(40px) saturate(160%);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08);animation:modalIn .65s var(--sheet) both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes modalIn{0%{opacity:0;transform:translateY(40px) scale(.94)}100%{opacity:1;transform:none}}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.modal-body{font-size:13.5px;color:rgba(238,243,249,0.85);line-height:1.6;font-weight:500}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+body.no-anim *{animation:none!important;transition:none!important}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+</svg>
+
+<canvas id="globalBg"></canvas>
+
+<div class="auth app-layer" id="auth" hidden>
+  <div class="auth-stage">
+    <div class="auth-logo">
+      <div class="auth-logo-text">Bubble <span>Crash</span></div>
+      <div class="auth-logo-sub">Играй и забирай</div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button id="tabLogin" class="on">Вход</button>
+        <button id="tabReg">Регистрация</button>
+        <div class="auth-tab-slider" id="authTabSlider"></div>
+      </div>
+      <div id="authErr"></div>
+      <form id="loginForm" class="auth-form">
+        <div class="auth-field"><span class="field-icon"><svg class="ico" width="18" height="18"><use href="#i-user"/></svg></span><input class="auth-input" id="loginLogin" placeholder="Логин" autocomplete="username"></div>
+        <div class="auth-field"><span class="field-icon"><svg class="ico" width="18" height="18"><use href="#i-lock"/></svg></span><input class="auth-input" id="loginPass" type="password" placeholder="Пароль" autocomplete="current-password"><button type="button" class="field-toggle" data-toggle="loginPass"><svg class="ico" width="16" height="16"><use href="#i-eye"/></svg></button></div>
+        <button class="btn primary w100 auth-submit" type="submit"><span>Войти</span></button>
+        <div class="auth-hint">Нет аккаунта? <a href="#" id="switchToReg">Зарегистрироваться</a></div>
+      </form>
+      <form id="regForm" class="auth-form" hidden>
+        <div class="auth-field"><span class="field-icon"><svg class="ico" width="18" height="18"><use href="#i-user"/></svg></span><input class="auth-input" id="regLogin" placeholder="Логин" autocomplete="username"></div>
+        <div class="auth-field"><span class="field-icon"><svg class="ico" width="18" height="18"><use href="#i-game"/></svg></span><input class="auth-input" id="regNick" placeholder="Ник в игре"></div>
+        <div class="auth-field"><span class="field-icon"><svg class="ico" width="18" height="18"><use href="#i-lock"/></svg></span><input class="auth-input" id="regPass" type="password" placeholder="Пароль (мин 4)" autocomplete="new-password"><button type="button" class="field-toggle" data-toggle="regPass"><svg class="ico" width="16" height="16"><use href="#i-eye"/></svg></button></div>
+        <button class="btn primary w100 auth-submit" type="submit"><span>Создать аккаунт</span></button>
+        <div class="auth-hint">Уже есть аккаунт? <a href="#" id="switchToLogin">Войти</a></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="app-layer" hidden>
+  <header class="top">
+    <div class="brand">Bubble<i>Crash</i></div>
+    <nav class="nav" id="nav">
+      <button data-view="game" class="on">Игра</button>
+      <button data-view="wallet">Кошелёк</button>
+      <button data-view="support">Поддержка</button>
+      <button data-view="settings">Настройки</button>
+      <button data-view="admin" id="navAdmin" hidden>Админка<span class="badge" id="adminBadge" hidden>0</span></button>
+    </nav>
+    <div class="top-right">
+      <div class="bal"><span class="tiny dim">Баланс</span><strong id="balVal">0 ₽</strong></div>
+      <div class="avatar" id="userAv">B</div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="view-game">
+      <div class="game-grid">
+        <div class="panel stage-card" id="stageCard">
+          <div class="stage-head">
+            <div><div class="mult" id="mult">1.00×</div><div class="state" id="stageState">Ожидание</div></div>
+            <div class="hist" id="hist"></div>
+          </div>
+          <div class="canvas-box" id="canvasBox">
+            <canvas id="cv"></canvas>
+            <div class="crash-flash" id="crashFlash"></div>
+            <div class="crash-tag" id="crashTag" hidden>CRASH</div>
+            <div class="pop-layer" id="popLayer"></div>
+          </div>
+          <div class="cdbar"><i id="countdownBar"></i></div>
+          <div class="hintstrip">
+            <span><b>1.</b> Ставка до старта</span>
+            <span><b>2.</b> Множитель растёт</span>
+            <span><b>3.</b> Заберите до краша</span>
+            <span><b>Пробел</b> — поставить / забрать</span>
+          </div>
+        </div>
+        <div class="panel side">
+          <div class="row between tiny"><span class="dim">Баланс</span><span id="sideBal" style="font-weight:700;color:var(--accent-hi)">0 ₽</span></div>
+          <div>
+            <label class="lbl" style="margin-top:4px">Сумма ставки</label>
+            <div class="input-row">
+              <input class="inp" id="betAmount" value="100" inputmode="decimal">
+              <span class="suffix">₽</span>
+              <button class="mini" id="halfBtn">½</button>
+              <button class="mini" id="maxBtn">MAX</button>
+            </div>
+            <div class="chips" id="chips">
+              <button data-amt="100">100</button><button data-amt="500">500</button><button data-amt="1000">1К</button>
+              <button data-amt="2500">2.5К</button><button data-amt="5000">5К</button><button data-amt="10000">10К</button>
+            </div>
+          </div>
+          <div>
+            <label class="check"><input type="checkbox" id="autoCash"><span>Авто-вывод</span><input class="inp" id="autoAt" value="2.00" style="width:76px;padding:6px 10px;text-align:center;font-weight:700"> <span class="dim">×</span></label>
+            <label class="check"><input type="checkbox" id="autoBet"><span>Авто-ставка</span></label>
+          </div>
+          <button class="btn primary w100 big" id="actionBtn">Поставить</button>
+          <div class="tiny dim center" id="betHint" style="min-height:16px"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><span>Игроки за столом</span><span id="betsCount" class="dim" style="text-transform:none;letter-spacing:0"></span></div>
+        <div class="bets-list" id="betsList"></div>
+      </div>
+    </section>
+
+    <section id="view-wallet" hidden>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><span>Баланс</span></div>
+          <div class="big-bal" id="walletBalance">0 ₽</div>
+          <div style="margin-top:18px" class="tiny muted">Оборот · <span id="wagerTxt">0 ₽ / 0 ₽</span></div>
+          <div class="bar"><i id="wagerBar"></i></div>
+          <div class="tiny dim" id="wagerNote" style="margin-top:10px;font-weight:500"></div>
+          <div class="hr"></div>
+          <div class="panel-head" style="margin-bottom:8px"><span>Реквизиты для пополнения</span></div>
+          <pre class="req" id="reqBox">—</pre>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Мои заявки</span></div>
+          <div id="paymentsList"></div>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-head"><span>Пополнение</span></div>
+          <div class="input-row"><input class="inp" id="depAmt" value="500" inputmode="decimal"><span class="suffix">₽</span></div>
+          <label class="lbl">Банк</label><input class="inp" id="depBank" placeholder="Сбербанк">
+          <label class="lbl">Номер карты</label><input class="inp" id="depCard" placeholder="0000 0000 0000 0000">
+          <div class="tiny dim" style="margin-top:8px">После создания заявки админ пришлёт реквизиты для перевода</div>
+          <button class="btn primary w100" id="depBtn" style="margin-top:14px">Создать заявку на пополнение</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Вывод</span></div>
+          <div class="input-row"><input class="inp" id="wdAmt" value="100" inputmode="decimal"><span class="suffix">₽</span></div>
+          <label class="lbl">Ваш банк</label><input class="inp" id="wdBank" placeholder="Тинькофф">
+          <label class="lbl">Номер карты для получения</label><input class="inp" id="wdCard" placeholder="0000 0000 0000 0000">
+          <div class="tiny dim" style="margin-top:8px">Админ выведет деньги по этим реквизитам и закроет заявку</div>
+          <button class="btn w100" id="wdBtn" style="margin-top:14px">Создать заявку на вывод</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><span>История операций</span></div>
+        <div class="txlist" id="txList"></div>
+      </div>
+    </section>
+
+    <section id="view-support" hidden>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><span>Новое обращение</span></div>
+          <label class="lbl" style="margin-top:0">Тема</label><input class="inp" id="tkSubject" placeholder="Например: не пришло пополнение">
+          <label class="lbl">Сообщение</label><textarea class="inp" id="tkText"></textarea>
+          <button class="btn primary w100" id="tkSend" style="margin-top:14px">Отправить</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Мои обращения</span></div>
+          <div id="supportList"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px" id="supportThreadPanel"><div class="empty">Выберите обращение</div></div>
+    </section>
+
+    <section id="view-settings" hidden>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><span>Профиль</span></div>
+          <label class="lbl" style="margin-top:0">Ник</label><input class="inp" id="stNick">
+          <label class="lbl">Аватар</label><div class="row gap" id="avRow"></div>
+          <button class="btn primary w100" id="stSave" style="margin-top:18px">Сохранить</button>
+          <div class="hr"></div>
+          <div class="panel-head"><span>Пароль</span></div>
+          <label class="lbl" style="margin-top:0">Текущий</label><input class="inp" id="stCurPass" type="password">
+          <label class="lbl">Новый</label><input class="inp" id="stNewPass" type="password">
+          <button class="btn w100" id="stChPass" style="margin-top:14px">Сменить пароль</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Интерфейс</span></div>
+          <label class="check"><input type="checkbox" id="stAnim" checked><span>Плавные анимации</span></label>
+          <label class="check"><input type="checkbox" id="stSound" checked><span>Звук</span></label>
+          <label class="check"><input type="checkbox" id="stAutoBet"><span>Авто-ставка</span></label>
+          <div class="hr"></div>
+          <div class="panel-head"><span>Статистика</span></div>
+          <div id="statsBox" class="tiny muted" style="line-height:2.2"></div>
+          <div class="hr"></div>
+          <div class="row gap">
+            <button class="btn danger" id="logoutBtn">Выйти</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-admin" hidden>
+      <div class="panel">
+        <div class="tabs" id="adminTabs">
+          <button data-tab="requests" class="on">Заявки</button>
+          <button data-tab="users">Игроки</button>
+          <button data-tab="support">Обращения</button>
+          <button data-tab="cfg">Настройки</button>
+        </div>
+        <div id="adminBody"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2});
+const money=n=>fmt(n)+' ₽';
+const fmtDate=ts=>{const d=new Date(ts);const p=x=>x<10?'0'+x:''+x;return p(d.getDate())+'.'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes());};
+const SHADES=['#5eb8d4','#4fa3bd','#7ed4ee','#3d8ba6','#6ec0d9','#4d9fb8'];
+function uid(){return 'u'+Math.random().toString(36).slice(2,9);}
+function hash(s){s=String(s);var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return (h>>>0).toString(36);}
+
+let ME=null;
+const LS='bubble_crash_prod';
+const ADMIN_LOGIN='zeruxx123';
+const ADMIN_PASS='zeruxx1234567890';
+
+function defaultDB(){
+  return {
+    users:[{id:'admin',login:ADMIN_LOGIN,pass:hash(ADMIN_PASS),nick:'Administrator',role:'admin',balance:0,wagered:0,wagerNeeded:0,banned:false,avatar:0,stats:{bets:0,wins:0,turnover:0,best:0}}],
+    tickets:[],tx:[],requests:[],
+    cfg:{
+      minDep:100,minWd:100,wagerMult:2,
+      requisites:'Банк: Сбербанк\nКарта: 0000 0000 0000 0000\nПолучатель: Bubble Crash',
+      banks:['Сбербанк','Тинькофф','Альфа-Банк','ВТБ','Райффайзен','Газпромбанк','МТС Банк','Совкомбанк','Другой']
+    },
+    settings:{anim:true,sound:true},
+    session:null
+  };
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw) return defaultDB();
+    const d=JSON.parse(raw);
+    const base=defaultDB();
+    for(const k in base) if(d[k]===undefined) d[k]=base[k];
+    if(!d.cfg.banks||!d.cfg.banks.length) d.cfg.banks=base.cfg.banks;
+    let admin=d.users.filter(u=>u.login===ADMIN_LOGIN)[0];
+    if(!admin){
+      d.users=d.users.filter(u=>u.login!=='admin');
+      d.users.unshift({...base.users[0]});
+    } else {
+      admin.pass=hash(ADMIN_PASS);
+      admin.role='admin';admin.banned=false;
+    }
+    d.users.forEach(u=>{
+      if(!u.stats) u.stats={bets:0,wins:0,turnover:0,best:0};
+      if(u.wagered==null) u.wagered=0;
+      if(u.wagerNeeded==null) u.wagerNeeded=0;
+    });
+    if(!d.requests) d.requests=[];
+    localStorage.setItem(LS,JSON.stringify(d));
+    return d;
+  }catch(e){ return defaultDB(); }
+}
+let db=load();
+function save(){try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){}}
+function userById(id){return db.users.filter(u=>u.id===id)[0]||null;}
+function addTx(kind,amount,note){
+  if(!ME) return;
+  db.tx.unshift({id:uid(),userId:ME.id,kind,amount,note:note||'',at:Date.now()});
+  if(db.tx.length>400) db.tx.length=400;
+}
+
+/* ==== ВИЗУАЛ: глобальный анимированный фон ==== */
+const bgCanvas=document.getElementById('globalBg');
+let bgCtx=null;
+const GLOBAL_BG={orbs:[],dust:[],stars:[],ribbons:[],mouse:{x:.5,y:.5},t:0,ready:false};
+function initGlobalBg(){
+  bgCtx=bgCanvas.getContext('2d');
+  function resize(){
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    bgCanvas.width=Math.round(window.innerWidth*dpr);
+    bgCanvas.height=Math.round(window.innerHeight*dpr);
+    bgCanvas.style.width=window.innerWidth+'px';
+    bgCanvas.style.height=window.innerHeight+'px';
+    bgCtx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  resize();window.addEventListener('resize',resize);
+  const W=()=>window.innerWidth,H=()=>window.innerHeight;
+  GLOBAL_BG.orbs=[];
+  for(let i=0;i<6;i++) GLOBAL_BG.orbs.push({x:Math.random()*W(),y:Math.random()*H(),r:180+Math.random()*320,hue:190+Math.random()*40,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.25,phase:Math.random()*Math.PI*2,pulse:.6+Math.random()*.6});
+  GLOBAL_BG.stars=[];
+  for(let i=0;i<90;i++) GLOBAL_BG.stars.push({x:Math.random()*W(),y:Math.random()*H(),r:.3+Math.random()*1.6,phase:Math.random()*Math.PI*2,speed:.4+Math.random()*1.4,alpha:.25+Math.random()*.5});
+  GLOBAL_BG.dust=[];
+  for(let i=0;i<60;i++) GLOBAL_BG.dust.push({x:Math.random()*W(),y:Math.random()*H(),r:.6+Math.random()*2,vx:-.1-Math.random()*.5,vy:(Math.random()-.5)*.25,alpha:.15+Math.random()*.4,tw:Math.random()*Math.PI*2,tws:.5+Math.random()*2});
+  GLOBAL_BG.ribbons=[];
+  for(let i=0;i<3;i++) GLOBAL_BG.ribbons.push({y:Math.random()*H(),amp:40+Math.random()*60,freq:.004+Math.random()*.003,phase:Math.random()*Math.PI*2,speed:.3+Math.random()*.4,alpha:.04+Math.random()*.05,hue:190+Math.random()*30});
+  GLOBAL_BG.ready=true;
+  let last=performance.now();
+  function frame(now){
+    const dt=Math.min(64,now-last)/16.7;last=now;
+    GLOBAL_BG.t+=dt*.016;
+    const w=window.innerWidth,h=window.innerHeight;
+    bgCtx.clearRect(0,0,w,h);
+    const g=bgCtx.createRadialGradient(w*.5,h*.3,0,w*.5,h*.5,Math.max(w,h)*.9);
+    g.addColorStop(0,'#0b1420');g.addColorStop(.5,'#070d16');g.addColorStop(1,'#03060b');
+    bgCtx.fillStyle=g;bgCtx.fillRect(0,0,w,h);
+    for(const o of GLOBAL_BG.orbs){
+      o.x+=o.vx*dt;o.y+=o.vy*dt;o.phase+=.003*dt;
+      if(o.x<-o.r)o.x=w+o.r;if(o.x>w+o.r)o.x=-o.r;
+      if(o.y<-o.r)o.y=h+o.r;if(o.y>h+o.r)o.y=-o.r;
+      const pulse=.8+Math.sin(o.phase)*.2;
+      const grd=bgCtx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+      grd.addColorStop(0,`hsla(${o.hue},70%,55%,${.10*o.pulse})`);
+      grd.addColorStop(.4,`hsla(${o.hue},70%,50%,${.04*o.pulse})`);
+      grd.addColorStop(1,`hsla(${o.hue},70%,50%,0)`);
+      bgCtx.fillStyle=grd;bgCtx.fillRect(0,0,w,h);
+    }
+    for(const r of GLOBAL_BG.ribbons){
+      r.phase+=.004*dt*r.speed;
+      bgCtx.strokeStyle=`hsla(${r.hue},80%,60%,${r.alpha})`;
+      bgCtx.lineWidth=1.5;
+      bgCtx.beginPath();
+      for(let x=0;x<=w;x+=14){
+        const y=r.y+Math.sin(x*r.freq+r.phase)*r.amp+Math.sin(x*r.freq*.4+r.phase*1.7)*r.amp*.4;
+        if(x===0) bgCtx.moveTo(x,y);else bgCtx.lineTo(x,y);
+      }
+      bgCtx.stroke();
+    }
+    for(const s of GLOBAL_BG.stars){
+      s.phase+=s.speed*dt*.04;
+      const tw=.5+Math.sin(s.phase)*.5;
+      bgCtx.fillStyle=`rgba(200,230,245,${(s.alpha*tw*.8).toFixed(3)})`;
+      bgCtx.beginPath();bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);bgCtx.fill();
+    }
+    for(const p of GLOBAL_BG.dust){
+      p.x+=p.vx*dt;p.y+=p.vy*dt;p.tw+=p.tws*dt*.05;
+      if(p.x<-10)p.x=w+10;if(p.x>w+10)p.x=-10;
+      if(p.y<-10)p.y=h+10;if(p.y>h+10)p.y=-10;
+      const tw=.6+Math.sin(p.tw)*.4;
+      bgCtx.fillStyle=`rgba(126,212,238,${(p.alpha*tw*.7).toFixed(3)})`;
+      bgCtx.beginPath();bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);bgCtx.fill();
+    }
+    const mx=GLOBAL_BG.mouse.x*w,my=GLOBAL_BG.mouse.y*h;
+    const mg=bgCtx.createRadialGradient(mx,my,0,mx,my,320);
+    mg.addColorStop(0,'rgba(94,184,212,0.06)');
+    mg.addColorStop(1,'rgba(94,184,212,0)');
+    bgCtx.fillStyle=mg;bgCtx.fillRect(0,0,w,h);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+window.addEventListener('mousemove',e=>{GLOBAL_BG.mouse.x=e.clientX/window.innerWidth;GLOBAL_BG.mouse.y=e.clientY/window.innerHeight;});
+
+/* ==== UI утилиты ==== */
+let toastTimer=null;
+function toast(msg){
+  const t=$('#toast');if(!t) return;
+  t.textContent=msg;t.className='toast show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.className='toast';},2800);
+}
+function openModal(cfg){
+  $('#modalTitle').textContent=cfg.title||'';
+  $('#modalBody').innerHTML=cfg.body||'';
+  const foot=$('#modalFoot');foot.innerHTML='';
+  (cfg.buttons||[{label:'Закрыть'}]).forEach(b=>{
+    const el=document.createElement('button');
+    el.className='btn'+(b.primary?' primary':'')+(b.danger?' danger':'');
+    el.textContent=b.label;
+    el.onclick=()=>{
+      const inp=$('#modalInput');const val=inp?inp.value:null;
+      if(b.onClick && b.onClick(val)===false) return;
+      closeModal();
+    };
+    foot.appendChild(el);
+  });
+  $('#modal').hidden=false;
+  setTimeout(()=>{const i=$('#modalInput');if(i){i.focus();i.select();}},40);
+}
+function closeModal(){$('#modal').hidden=true;}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal') closeModal();});
+
+let actx=null;
+function sfx(kind){
+  if(!db.settings.sound) return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    if(!actx) actx=new AC();
+    const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime;
+    o.connect(g);g.connect(actx.destination);
+    if(kind==='crash'){
+      o.type='sine';o.frequency.setValueAtTime(300,t);
+      o.frequency.exponentialRampToValueAtTime(70,t+.7);
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.8);
+      o.start(t);o.stop(t+.85);
+    } else if(kind==='win'){
+      o.type='sine';o.frequency.setValueAtTime(700,t);
+      o.frequency.exponentialRampToValueAtTime(1500,t+.2);
+      g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.start(t);o.stop(t+.4);
+    } else {
+      o.type='sine';o.frequency.setValueAtTime(450,t);
+      g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);
+      o.start(t);o.stop(t+.16);
+    }
+  }catch(e){}
+}
+
+/* ==== AUTH ==== */
+function setAuthTab(idx){
+  const slider=$('#authTabSlider');if(!slider) return;
+  if(idx===0){slider.classList.remove('right');$('#tabLogin').classList.add('on');$('#tabReg').classList.remove('on');$('#loginForm').hidden=false;$('#regForm').hidden=true;}
+  else{slider.classList.add('right');$('#tabReg').classList.add('on');$('#tabLogin').classList.remove('on');$('#loginForm').hidden=true;$('#regForm').hidden=false;}
+}
+function authErr(msg){$('#authErr').innerHTML=msg?('<div class="err">'+esc(msg)+'</div>'):'';}
+function showAuth(){
+  $('#auth').hidden=false;$('#app').hidden=true;
+  setAuthTab(0);authErr('');
+}
+$('#tabLogin').onclick=()=>{setAuthTab(0);authErr('');};
+$('#tabReg').onclick=()=>{setAuthTab(1);authErr('');};
+$('#switchToReg').onclick=e=>{e.preventDefault();setAuthTab(1);authErr('');};
+$('#switchToLogin').onclick=e=>{e.preventDefault();setAuthTab(0);authErr('');};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('.field-toggle');if(!t) return;
+  const id=t.getAttribute('data-toggle');
+  const inp=document.getElementById(id);if(!inp) return;
+  inp.type=inp.type==='password'?'text':'password';
+  t.innerHTML=inp.type==='password'?'<svg class="ico" width="16" height="16"><use href="#i-eye"/></svg>':'<svg class="ico" width="16" height="16"><use href="#i-eye-off"/></svg>';
+});
+$('#loginForm').addEventListener('submit',e=>{
+  e.preventDefault();authErr('');
+  const login=$('#loginLogin').value.trim().toLowerCase();
+  const pass=$('#loginPass').value;
+  const u=db.users.filter(x=>x.login.toLowerCase()===login)[0];
+  if(!u) return authErr('Аккаунт не найден');
+  if(u.pass!==hash(pass)) return authErr('Неверный пароль');
+  if(u.banned) return authErr('Аккаунт заблокирован');
+  ME=u;db.session=u.id;save();
+  $('#loginPass').value='';authErr('');
+  enterApp();
+});
+$('#regForm').addEventListener('submit',e=>{
+  e.preventDefault();authErr('');
+  const login=$('#regLogin').value.trim().toLowerCase();
+  const nick=$('#regNick').value.trim()||login;
+  const pass=$('#regPass').value;
+  if(login.length<3) return authErr('Логин минимум 3 символа');
+  if(!/^[a-zA-Z0-9_.-]+$/.test(login)) return authErr('Только латиница, цифры, _ . -');
+  if(pass.length<4) return authErr('Пароль минимум 4 символа');
+  if(db.users.some(x=>x.login.toLowerCase()===login)) return authErr('Логин занят');
+  const u={id:uid(),login,pass:hash(pass),nick,role:'player',balance:0,wagered:0,wagerNeeded:0,banned:false,avatar:Math.floor(Math.random()*SHADES.length),stats:{bets:0,wins:0,turnover:0,best:0}};
+  db.users.push(u);ME=u;db.session=u.id;save();
+  $('#regPass').value='';authErr('');
+  enterApp();
+  toast('Добро пожаловать, '+u.nick);
+});
+function enterApp(){
+  $('#auth').hidden=true;$('#app').hidden=false;
+  $('#betAmount').value=100;
+  const isStaff=ME.role==='admin'||ME.role==='staff';
+  $('#navAdmin').hidden=!isStaff;
+  renderBalance();renderWallet();renderSettings();
+  go('game');
+  initBG();
+  beginBetting();
+}
+
+$('#nav').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-view]');if(b) go(b.dataset.view);
+});
+function go(view){
+  ['game','wallet','support','settings','admin'].forEach(v=>{
+    const el=$('#view-'+v);if(el) el.hidden=(v!==view);
+  });
+  $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+  if(view==='wallet') renderWallet();
+  if(view==='support') renderSupport();
+  if(view==='settings') renderSettings();
+  if(view==='admin') renderAdmin();
+}
+
+/* ==== БАЛАНС ==== */
+let balanceAnim=null;
+function renderBalance(){
+  if(!ME) return;
+  const el=$('#balVal');if(!el) return;
+  const from=parseFloat(el.dataset.val||'0');const to=ME.balance;
+  if(Math.abs(to-from)>0.01){
+    if(balanceAnim) cancelAnimationFrame(balanceAnim);
+    const t0=performance.now();const dur=600;
+    function tick(t){
+      const k=Math.min(1,(t-t0)/dur);
+      const ease=1-Math.pow(1-k,3);
+      const val=from+(to-from)*ease;
+      el.textContent=money(val);
+      const side=$('#sideBal');if(side) side.textContent=money(val);
+      el.dataset.val=val;
+      if(k<1) balanceAnim=requestAnimationFrame(tick);
+      else{el.textContent=money(to);el.dataset.val=to;if(side) side.textContent=money(to);}
+    }
+    el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
+    balanceAnim=requestAnimationFrame(tick);
+  } else {
+    el.textContent=money(to);el.dataset.val=to;
+    const side=$('#sideBal');if(side) side.textContent=money(to);
+  }
+  const av=$('#userAv');
+  av.textContent=(ME.nick||'B').slice(0,1).toUpperCase();
+  av.style.background=SHADES[ME.avatar%SHADES.length];
+  updateAdminBadge();
+}
+function updateAdminBadge(){
+  const b=$('#adminBadge');if(!b||!ME) return;
+  const isStaff=ME.role==='admin'||ME.role==='staff';
+  if(!isStaff){b.hidden=true;return;}
+  const n=db.requests.filter(r=>r.status==='pending').length+db.tickets.filter(t=>t.status==='open'&&t.msgs.slice(-1)[0]?.who==='user').length;
+  b.hidden=n===0;b.textContent=n;
+}
+
+/* ==== ИГРА ==== */
+const cv=$('#cv');let ctx=null;
+const BOTS=['Nova','Vertex','Pulse','Apex','Zenith','Orbit','Flux','Cipher','Vector','Prime'];
+const BETTING_MS=7000,PAUSE_MS=2800;
+const G={phase:'betting',phaseEnd:0,runStart:0,crashAt:2,crashAtMs:0,mult:1,countdown:7,bet:null,bots:[],history:[],particles:[],cracks:[],lastHead:null,lastTs:0,lastBetsRender:0};
+
+function genCrash(){const r=Math.random();let c=.97/Math.max(.0001,1-r);if(c>250) c=250;return Math.max(1.01,Math.round(c*100)/100);}
+function makeBots(){
+  const n=4+Math.floor(Math.random()*5);
+  const pool=[...BOTS].sort(()=>Math.random()-.5);
+  const amts=[50,100,200,250,500,1000,2500];const out=[];
+  for(let i=0;i<n;i++) out.push({name:pool[i%pool.length],amount:amts[Math.floor(Math.random()*amts.length)],autoAt:Math.round((1.15+Math.random()*Math.random()*7)*100)/100,done:false,winAt:0,result:0,lost:false});
+  return out;
+}
+function beginBetting(){
+  BG.shakeDecay=0;BG.shakeX=0;BG.shakeY=0;BG.speed=1;
+  G.phase='betting';G.mult=1;G.countdown=BETTING_MS/1000;
+  G.crashAt=genCrash();G.bet=null;G.bots=makeBots();
+  G.particles=[];G.cracks=[];G.lastHead=null;
+  G.phaseEnd=performance.now()+BETTING_MS;
+  $('#crashTag').hidden=true;
+  $('#countdownBar').style.width='100%';
+  renderBets(true);renderHistory();updateStage();
+}
+function beginRunning(){
+  G.phase='running';G.runStart=performance.now();G.mult=1;
+  $('#crashTag').hidden=true;
+  $('#countdownBar').style.width='0%';
+  renderBets(true);updateStage();sfx('bet');
+}
+function doCrash(){
+  G.phase='crashed';G.crashAtMs=performance.now();G.mult=G.crashAt;
+  if(G.bet && !G.bet.done){G.bet.done=true;G.bet.lost=true;}
+  G.bots.forEach(b=>{if(!b.done){b.done=true;b.lost=true;}});
+  G.history.unshift(G.mult);if(G.history.length>16) G.history.pop();
+  const head=G.lastHead||{x:0,y:0};
+  const box=$('#canvasBox');
+  if(box && head.x>0 && head.y>0){
+    const r=box.getBoundingClientRect();
+    const fl=$('#crashFlash');
+    fl.style.setProperty('--fx',((head.x/r.width)*100).toFixed(1)+'%');
+    fl.style.setProperty('--fy',((head.y/r.height)*100).toFixed(1)+'%');
+    fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+    for(let w=0;w<6;w++){
+      setTimeout(()=>{
+        const wave=document.createElement('div');
+        wave.className='crash-wave';
+        wave.style.left=head.x+'px';wave.style.top=head.y+'px';
+        wave.style.animationDelay=(w*90)+'ms';
+        box.appendChild(wave);
+        setTimeout(()=>wave.remove(),3200);
+      },w*150);
+    }
+  }
+  BG.shakeDecay=14;BG.speed=2.5;
+  const sc=$('#stageCard');
+  sc.classList.remove('shake');void sc.offsetWidth;sc.classList.add('shake');
+  spikeHead();
+  G.phaseEnd=performance.now()+PAUSE_MS;
+  $('#crashTag').hidden=false;
+  sfx('crash');
+  renderHistory();renderBets(true);updateStage();
+}
+
+/* ==== ФОН КАНВАСА ИГРЫ ==== */
+const BG={orbs:[],dust:[],lines:[],stars:[],speed:1,shakeX:0,shakeY:0,shakeDecay:0,time:0,hue:0};
+function initBG(){
+  BG.orbs=[];BG.dust=[];BG.lines=[];BG.stars=[];
+  BG.speed=1;BG.shakeX=0;BG.shakeY=0;BG.shakeDecay=0;BG.time=0;BG.hue=0;
+  for(let i=0;i<5;i++) BG.orbs.push({x:Math.random()*2400,y:Math.random()*600,r:200+Math.random()*280,hue:Math.random()*360,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.1,phase:Math.random()*Math.PI*2,speed:.3+Math.random()*.5});
+  for(let i=0;i<80;i++) BG.dust.push({x:Math.random()*2400,y:Math.random()*600,r:.5+Math.random()*2.5,vx:-.1-Math.random()*.6,vy:(Math.random()-.5)*.3,alpha:.15+Math.random()*.5,twinkle:Math.random()*Math.PI*2,twinkleSpeed:.5+Math.random()*2});
+  for(let i=0;i<20;i++) BG.lines.push({points:[],x:Math.random()*2400,y:Math.random()*600,len:3+Math.floor(Math.random()*4),angle:Math.random()*Math.PI*2,speed:.05+Math.random()*.2,alpha:.03+Math.random()*.08,phase:Math.random()*Math.PI*2});
+  for(let i=0;i<40;i++) BG.stars.push({x:Math.random()*2400,y:Math.random()*600,r:.3+Math.random()*1.5,phase:Math.random()*Math.PI*2,twinkleSpeed:.3+Math.random()*1.5,alpha:.3+Math.random()*.5});
+}
+function drawBackground(c,w,h,dt){
+  const t=performance.now()/1000;
+  BG.time+=dt;BG.hue+=dt*.02;
+  const bgGrad=c.createLinearGradient(0,0,0,h);
+  bgGrad.addColorStop(0,'#04070d');bgGrad.addColorStop(.5,'#0a1019');bgGrad.addColorStop(1,'#070b13');
+  c.fillStyle=bgGrad;c.fillRect(0,0,w,h);
+  if(G.phase==='crashed') BG.speed=Math.min(3,BG.speed+dt*.003);
+  else BG.speed=Math.max(1,BG.speed-dt*.001);
+  for(const o of BG.orbs){
+    o.x+=o.vx*BG.speed*dt*.02;o.y+=o.vy*BG.speed*dt*.02;o.phase+=.001*dt*o.speed;
+    if(o.x<-o.r)o.x=w+o.r;if(o.x>w+o.r)o.x=-o.r;
+    if(o.y<-o.r)o.y=h+o.r;if(o.y>h+o.r)o.y=-o.r;
+    const pulse=.8+Math.sin(o.phase)*.2;
+    const hue=(o.hue+BG.hue)%360;
+    const grd=c.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+    grd.addColorStop(0,`hsla(${hue},70%,55%,.12)`);
+    grd.addColorStop(.4,`hsla(${hue},70%,50%,.05)`);
+    grd.addColorStop(1,`hsla(${hue},70%,50%,0)`);
+    c.fillStyle=grd;c.fillRect(0,0,w,h);
+  }
+  for(const line of BG.lines){
+    line.x+=Math.cos(line.angle)*line.speed*BG.speed*dt*.3;
+    line.y+=Math.sin(line.angle)*line.speed*BG.speed*dt*.3;
+    line.phase+=.01*dt;
+    if(line.x<-100)line.x=w+100;if(line.x>w+100)line.x=-100;
+    if(line.y<-100)line.y=h+100;if(line.y>h+100)line.y=-100;
+    if(!line.points.length||line.points[0].x<line.x-200||line.points[0].x>line.x+200){
+      line.points=[];let px=line.x,py=line.y,ang=line.angle;
+      for(let k=0;k<line.len;k++){line.points.push({x:px,y:py});ang+=(Math.random()-.5)*.6;px+=Math.cos(ang)*20;py+=Math.sin(ang)*20;}
+    }
+    c.strokeStyle=`rgba(126,212,238,${line.alpha})`;
+    c.lineWidth=1;c.lineCap='round';c.beginPath();
+    for(let k=0;k<line.points.length;k++){
+      const wobble=Math.sin(line.phase+k*.5)*3;
+      if(k===0) c.moveTo(line.points[k].x+wobble,line.points[k].y+wobble);
+      else c.lineTo(line.points[k].x+wobble,line.points[k].y+wobble);
+    }
+    c.stroke();
+  }
+  for(const s of BG.stars){
+    s.phase+=s.twinkleSpeed*dt*.05;
+    const tw=.5+Math.sin(s.phase)*.5;
+    c.fillStyle=`rgba(200,230,245,${(s.alpha*tw*.7).toFixed(3)})`;
+    c.beginPath();c.arc(s.x,s.y,s.r,0,Math.PI*2);c.fill();
+  }
+  for(const p of BG.dust){
+    p.x+=p.vx*BG.speed*dt*.5;p.y+=p.vy*BG.speed*dt*.5;p.twinkle+=p.twinkleSpeed*dt*.05;
+    if(p.x<-10)p.x=w+10;if(p.x>w+10)p.x=-10;
+    if(p.y<-10)p.y=h+10;if(p.y>h+10)p.y=-10;
+    const tw=.6+Math.sin(p.twinkle)*.4;
+    c.fillStyle=`rgba(126,212,238,${(p.alpha*tw*.6).toFixed(3)})`;
+    c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill();
+  }
+  const vg=c.createRadialGradient(w/2,h/2,Math.min(w,h)*.4,w/2,h/2,Math.max(w,h)*.8);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.4)');
+  c.fillStyle=vg;c.fillRect(0,0,w,h);
+}
+
+function spawnBurst(x,y,count,power,colors){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2;
+    const sp=(.5+Math.random()*3)*(power||1);
+    G.particles.push({x,y,vx:Math.cos(a)*sp*12,vy:Math.sin(a)*sp*12-20,life:1,decay:.008+Math.random()*.014,size:1.5+Math.random()*3.5,color:colors?colors[Math.floor(Math.random()*colors.length)]:[126,212,238],trail:[],spin:Math.random()*Math.PI*2,spinSpeed:(Math.random()-.5)*.3});
+  }
+  if(G.particles.length>350) G.particles=G.particles.slice(-350);
+}
+function spikeHead(){
+  const p=G.lastHead||{x:0,y:0};
+  spawnBurst(p.x,p.y,50,1.4,[[126,212,238],[255,255,255]]);
+  spawnBurst(p.x,p.y,30,1.0,[[248,113,113]]);
+  spawnBurst(p.x,p.y,25,.7,[[251,191,36]]);
+  G.cracks=[];
+  for(let i=0;i<12;i++){
+    const baseAngle=(i/12)*Math.PI*2+(Math.random()-.5)*.5;
+    let angle=baseAngle;
+    const totalLen=70+Math.random()*130;
+    const segs=7;
+    const pts=[[p.x,p.y]];
+    let cx=p.x,cy=p.y;
+    for(let s=0;s<segs;s++){
+      angle+=(Math.random()-.5)*.6;
+      cx+=Math.cos(angle)*(totalLen/segs);
+      cy+=Math.sin(angle)*(totalLen/segs);
+      pts.push([cx+(Math.random()-.5)*8,cy+(Math.random()-.5)*8]);
+    }
+    G.cracks.push({pts,delay:Math.random()*180,width:1+Math.random()*1.5});
+  }
+}
+function updateParticles(dt){
+  const k=dt/16.7;
+  for(let i=G.particles.length-1;i>=0;i--){
+    const p=G.particles[i];
+    p.trail.push({x:p.x,y:p.y});if(p.trail.length>6) p.trail.shift();
+    p.x+=p.vx*k*.06;p.y+=p.vy*k*.06;
+    p.vy+=1.8*k*.06;p.vx*=.985;p.vy*=.985;
+    p.spin+=p.spinSpeed*k*.1;
+    p.life-=p.decay*k;
+    if(p.life<=0) G.particles.splice(i,1);
+  }
+}
+function drawParticles(c){
+  for(const p of G.particles){
+    const a=Math.max(0,p.life);
+    const [r,g,b]=p.color;
+    if(p.trail.length>1){
+      for(let i=0;i<p.trail.length-1;i++){
+        const t1=p.trail[i],t2=p.trail[i+1];
+        const ta=a*(i/p.trail.length)*.5;
+        c.strokeStyle=`rgba(${r},${g},${b},${ta.toFixed(3)})`;
+        c.lineWidth=p.size*(i/p.trail.length)*.4;c.lineCap='round';
+        c.beginPath();c.moveTo(t1.x,t1.y);c.lineTo(t2.x,t2.y);c.stroke();
+      }
+    }
+    const glowR=p.size*4;
+    const grd=c.createRadialGradient(p.x,p.y,0,p.x,p.y,glowR);
+    grd.addColorStop(0,`rgba(${r},${g},${b},${(a*.7).toFixed(3)})`);
+    grd.addColorStop(.5,`rgba(${r},${g},${b},${(a*.3).toFixed(3)})`);
+    grd.addColorStop(1,`rgba(${r},${g},${b},0)`);
+    c.fillStyle=grd;c.beginPath();c.arc(p.x,p.y,glowR,0,Math.PI*2);c.fill();
+    c.save();c.translate(p.x,p.y);c.rotate(p.spin);
+    c.fillStyle=`rgba(255,255,255,${a.toFixed(3)})`;
+    c.fillRect(-p.size/2,-p.size/2,p.size,p.size);c.restore();
+  }
+}
+function draw(ts){
+  if(!cv) return;
+  const rect=cv.getBoundingClientRect();const w=rect.width,h=rect.height;
+  if(!w||!h) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  if(!ctx) ctx=cv.getContext('2d');
+  const c=ctx;
+  if(BG.shakeDecay>0){
+    BG.shakeX=(Math.random()-.5)*BG.shakeDecay;BG.shakeY=(Math.random()-.5)*BG.shakeDecay;
+    BG.shakeDecay*=.92;
+    if(BG.shakeDecay<.1){BG.shakeDecay=0;BG.shakeX=0;BG.shakeY=0;}
+  }
+  c.setTransform(dpr,0,0,dpr,BG.shakeX,BG.shakeY);
+  c.clearRect(-20,-20,w+40,h+40);
+  if(!G.lastTs) G.lastTs=ts;
+  const dt=Math.min(64,ts-G.lastTs);
+  drawBackground(c,w,h,dt);
+  const padX=36,padY=30;
+  let elapsed=0;
+  if(G.phase==='running') elapsed=(ts-G.runStart)/1000;
+  else if(G.phase==='crashed') elapsed=Math.max(.001,(G.crashAtMs-G.runStart)/1000);
+  const tMax=Math.max(3.6,elapsed+.8);
+  const mMax=Math.max(1.6,G.mult*1.14);
+  const X=t=>padX+(t/tMax)*(w-padX*2);
+  const Y=m=>(h-padY)-((m-1)/(mMax-1))*(h-padY*2);
+  if(G.phase==='betting'||elapsed<=.001){
+    const y1=Y(1);
+    c.strokeStyle='rgba(139,150,168,0.2)';c.setLineDash([4,10]);c.lineWidth=1.5;
+    c.beginPath();c.moveTo(padX,y1);c.lineTo(w-padX,y1);c.stroke();c.setLineDash([]);
+    const k=(ts%1900)/1900;const px=padX+k*(w-padX*2);
+    const rr=4+Math.sin(ts/200)*1.5;
+    const grd=c.createRadialGradient(px,y1,0,px,y1,rr*4);
+    grd.addColorStop(0,'rgba(126,212,238,0.9)');grd.addColorStop(.5,'rgba(94,184,212,0.4)');grd.addColorStop(1,'rgba(94,184,212,0)');
+    c.fillStyle=grd;c.beginPath();c.arc(px,y1,rr*4,0,Math.PI*2);c.fill();
+    c.fillStyle='#7ed4ee';c.beginPath();c.arc(px,y1,rr,0,Math.PI*2);c.fill();
+    G.lastHead={x:px,y:y1};
+    drawParticles(c);
+    return;
+  }
+  const N=Math.max(50,Math.min(280,Math.round(elapsed*70)));
+  const pts=[];
+  for(let q=0;q<=N;q++){const t=elapsed*q/N;pts.push([X(t),Y(Math.exp(.19*t))]);}
+  const head=pts[pts.length-1];
+  G.lastHead={x:head[0],y:head[1]};
+  const alive=(G.phase==='running');
+  c.beginPath();c.moveTo(pts[0][0],h-padY);
+  for(const p of pts) c.lineTo(p[0],p[1]);
+  c.lineTo(head[0],h-padY);c.closePath();
+  const areaGrad=c.createLinearGradient(0,padY,0,h-padY);
+  if(alive){areaGrad.addColorStop(0,'rgba(94,184,212,0.25)');areaGrad.addColorStop(.5,'rgba(94,184,212,0.08)');areaGrad.addColorStop(1,'rgba(94,184,212,0)');}
+  else{areaGrad.addColorStop(0,'rgba(248,113,113,0.15)');areaGrad.addColorStop(1,'rgba(248,113,113,0)');}
+  c.fillStyle=areaGrad;c.fill();
+  c.beginPath();
+  for(let i=0;i<pts.length;i++){if(i===0) c.moveTo(pts[i][0],pts[i][1]);else c.lineTo(pts[i][0],pts[i][1]);}
+  if(alive){c.strokeStyle='rgba(126,212,238,0.4)';c.shadowColor='rgba(126,212,238,0.9)';c.shadowBlur=25;}
+  else{c.strokeStyle='rgba(248,113,113,0.4)';c.shadowColor='rgba(248,113,113,0.6)';c.shadowBlur=18;}
+  c.lineWidth=7;c.lineJoin='round';c.lineCap='round';c.stroke();c.shadowBlur=0;
+  c.beginPath();
+  for(let i=0;i<pts.length;i++){if(i===0) c.moveTo(pts[i][0],pts[i][1]);else c.lineTo(pts[i][0],pts[i][1]);}
+  c.strokeStyle=alive?'#7ed4ee':'#f87171';c.lineWidth=3;c.stroke();
+  c.beginPath();
+  for(let i=0;i<pts.length;i++){if(i===0) c.moveTo(pts[i][0],pts[i][1]);else c.lineTo(pts[i][0],pts[i][1]);}
+  c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=1.2;c.stroke();
+  if(alive){
+    for(let i=0;i<pts.length;i+=16){
+      const p=pts[i];const rr=2.5+Math.sin(ts/300+i)*1;
+      c.fillStyle='rgba(126,212,238,0.7)';c.beginPath();c.arc(p[0],p[1],rr,0,Math.PI*2);c.fill();
+    }
+  }
+  const hx=head[0],hy=head[1];
+  const pulse=alive?(ts%1000)/1000:0;
+  if(alive){
+    c.strokeStyle=`rgba(126,212,238,${(.6*(1-pulse)).toFixed(3)})`;
+    c.lineWidth=2;c.beginPath();c.arc(hx,hy,8+pulse*22,0,Math.PI*2);c.stroke();
+    c.strokeStyle=`rgba(94,184,212,${(.4*(1-pulse)).toFixed(3)})`;
+    c.lineWidth=1.5;c.beginPath();c.arc(hx,hy,8+pulse*38,0,Math.PI*2);c.stroke();
+  }
+  const bubbleR=alive?7:5;
+  const grd=c.createRadialGradient(hx-bubbleR*.3,hy-bubbleR*.3,bubbleR*.1,hx,hy,bubbleR);
+  grd.addColorStop(0,'rgba(255,255,255,1)');
+  grd.addColorStop(.5,alive?'rgba(126,212,238,0.9)':'rgba(248,113,113,0.9)');
+  grd.addColorStop(1,alive?'rgba(94,184,212,0.3)':'rgba(248,113,113,0.3)');
+  c.fillStyle=grd;c.beginPath();c.arc(hx,hy,bubbleR,0,Math.PI*2);c.fill();
+  c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=1.5;c.stroke();
+  c.fillStyle='rgba(255,255,255,0.9)';
+  c.beginPath();c.ellipse(hx-bubbleR*.4,hy-bubbleR*.45,bubbleR*.22,bubbleR*.15,-.5,0,Math.PI*2);c.fill();
+  if(G.phase==='crashed') drawCrashAnimation(c,hx,hy,ts);
+  drawParticles(c);
+}
+function drawCrashAnimation(c,hx,hy,ts){
+  const dt=ts-G.crashAtMs;
+  if(dt<0) return;
+  const TOTAL=2800;if(dt>TOTAL) return;
+  if(dt<200){
+    const s=dt/200;const e=1-Math.pow(1-s,3);
+    const pointR=8*(1-e*.7);
+    c.fillStyle=`rgba(255,255,255,${(1-s*.3).toFixed(3)})`;
+    c.beginPath();c.arc(hx,hy,pointR,0,Math.PI*2);c.fill();
+    for(let i=0;i<12;i++){
+      const ang=(i/12)*Math.PI*2;const dist=(1-e)*150+20;
+      const px=hx+Math.cos(ang)*dist;const py=hy+Math.sin(ang)*dist;
+      c.strokeStyle=`rgba(126,212,238,${(e*.6).toFixed(3)})`;
+      c.lineWidth=1.5;c.beginPath();c.moveTo(px,py);c.lineTo(hx,hy);c.stroke();
+    }
+  }
+  if(dt>120 && dt<900){
+    const s=Math.min(1,(dt-120)/780);const alpha=Math.max(0,1-s)*.9;const size=380*s+40;
+    const grd=c.createRadialGradient(hx,hy,0,hx,hy,size);
+    grd.addColorStop(0,`rgba(255,255,255,${alpha.toFixed(3)})`);
+    grd.addColorStop(.15,`rgba(255,220,220,${(alpha*.9).toFixed(3)})`);
+    grd.addColorStop(.35,`rgba(248,113,113,${(alpha*.6).toFixed(3)})`);
+    grd.addColorStop(.6,`rgba(126,212,238,${(alpha*.3).toFixed(3)})`);
+    grd.addColorStop(1,'rgba(126,212,238,0)');
+    c.fillStyle=grd;c.beginPath();c.arc(hx,hy,size,0,Math.PI*2);c.fill();
+  }
+  const rings=[
+    {delay:0,maxR:450,width:5,color:'255,255,255',dur:1500},
+    {delay:80,maxR:380,width:4,color:'248,113,113',dur:1700},
+    {delay:160,maxR:520,width:3,color:'126,212,238',dur:1900},
+    {delay:280,maxR:340,width:2.5,color:'251,191,36',dur:1600},
+    {delay:400,maxR:600,width:2,color:'255,180,180',dur:2100},
+    {delay:600,maxR:280,width:1.5,color:'126,212,238',dur:1400}
+  ];
+  for(const ring of rings){
+    const rd=dt-ring.delay;
+    if(rd<0||rd>ring.dur) continue;
+    const rk=rd/ring.dur;const re=1-Math.pow(1-rk,3);
+    const radius=8+re*ring.maxR;const alpha=(1-re)*.85;const lw=ring.width*(1-re)+.4;
+    c.strokeStyle=`rgba(${ring.color},${alpha.toFixed(3)})`;
+    c.lineWidth=lw;c.beginPath();c.arc(hx,hy,radius,0,Math.PI*2);c.stroke();
+  }
+  if(dt<1000){
+    const s=dt/1000;const re=1-Math.pow(1-s,3);
+    const rayLen=re*550;const alpha=(1-s)*.5;
+    for(let i=0;i<12;i++){
+      const ang=(i/12)*Math.PI*2+Math.sin(dt*.003)*.1;
+      const x1=hx+Math.cos(ang)*20;const y1=hy+Math.sin(ang)*20;
+      const x2=hx+Math.cos(ang)*rayLen;const y2=hy+Math.sin(ang)*rayLen;
+      const grd=c.createLinearGradient(x1,y1,x2,y2);
+      grd.addColorStop(0,`rgba(255,255,255,${alpha.toFixed(3)})`);
+      grd.addColorStop(.5,`rgba(248,113,113,${(alpha*.6).toFixed(3)})`);
+      grd.addColorStop(1,'rgba(248,113,113,0)');
+      c.strokeStyle=grd;c.lineWidth=3*(1-s)+.5;c.lineCap='round';
+      c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+    }
+  }
+  const crackK=Math.min(1,Math.max(0,(dt-180)/1800));
+  const crackAlpha=(1-crackK)*.95;
+  if(crackAlpha>0 && G.cracks.length){
+    for(const cr of G.cracks){
+      const cp=cr.pts;if(!cp||cp.length<2) continue;
+      const lineProgress=Math.min(1,(dt-180-cr.delay)/500);
+      if(lineProgress<=0) continue;
+      const totalSegs=cp.length-1;const visibleSegs=lineProgress*totalSegs;
+      const maxI=Math.min(totalSegs,Math.floor(visibleSegs));
+      c.strokeStyle=`rgba(248,113,113,${(crackAlpha*.4).toFixed(3)})`;
+      c.lineWidth=(cr.width||2)*6*(1-crackK)+1;c.lineCap='round';c.lineJoin='round';
+      c.beginPath();c.moveTo(cp[0][0],cp[0][1]);
+      for(let i=1;i<=maxI;i++) c.lineTo(cp[i][0],cp[i][1]);
+      c.stroke();
+      c.strokeStyle=`rgba(255,255,255,${crackAlpha.toFixed(3)})`;
+      c.lineWidth=(cr.width||2)*(1-crackK)+.5;c.stroke();
+    }
+  }
+  if(dt>400){
+    const s=Math.min(1,(dt-400)/2400);const fogAlpha=(1-s)*.25;
+    const grd=c.createRadialGradient(hx,hy,0,hx,hy,500*s+60);
+    grd.addColorStop(0,'rgba(255,255,255,0)');
+    grd.addColorStop(.2,`rgba(248,113,113,${(fogAlpha*.6).toFixed(3)})`);
+    grd.addColorStop(.5,`rgba(126,212,238,${(fogAlpha*.4).toFixed(3)})`);
+    grd.addColorStop(1,'rgba(126,212,238,0)');
+    c.fillStyle=grd;c.beginPath();c.arc(hx,hy,500*s+60,0,Math.PI*2);c.fill();
+  }
+}
+function loop(ts){
+  if(!G.lastTs) G.lastTs=ts;
+  const dt=Math.min(64,ts-G.lastTs);G.lastTs=ts;
+  if(!$('#app').hidden){
+    if(G.phase==='betting'){
+      const left=(G.phaseEnd-ts)/1000;
+      G.countdown=Math.max(0,left);
+      $('#countdownBar').style.width=Math.max(0,Math.min(100,left/(BETTING_MS/1000)*100))+'%';
+      if(left<=0) beginRunning();
+    } else if(G.phase==='running'){
+      const el=(ts-G.runStart)/1000;
+      G.mult=Math.exp(.19*el);
+      botsCash();
+      if(ME && $('#autoCash').checked){
+        const target=parseFloat($('#autoAt').value)||0;
+        if(target>1 && G.mult>=target && G.bet && !G.bet.done) cashOut(target);
+      }
+      if(G.mult>=G.crashAt){G.mult=G.crashAt;doCrash();}
+      else {
+        const mEl=$('#mult');
+        mEl.textContent=G.mult.toFixed(2)+'×';
+        const glow=Math.min(50,15+G.mult*5);
+        mEl.style.textShadow='0 0 '+glow+'px rgba(126,212,238,'+Math.min(.7,.2+G.mult*.06).toFixed(3)+')';
+        mEl.style.transform='scale('+(1+Math.min(.15,G.mult*.008)).toFixed(3)+')';
+      }
+    } else {
+      if(ts-G.crashAtMs>PAUSE_MS) beginBetting();
+    }
+    updateParticles(dt);draw(ts);
+    if(ts-G.lastBetsRender>240){G.lastBetsRender=ts;renderBets(false);updateStage();}
+  }
+  requestAnimationFrame(loop);
+}
+function botsCash(){
+  G.bots.forEach(b=>{
+    if(!b.done && G.mult>=b.autoAt){b.done=true;b.winAt=b.autoAt;b.result=Math.round(b.amount*b.autoAt*100)/100;}
+  });
+}
+function renderBets(force){
+  const box=$('#betsList');if(!box) return;
+  const rows=[];
+  if(ME && G.bet) rows.push({key:'me',name:ME.nick,amount:G.bet.amount,obj:G.bet,mine:true});
+  G.bots.forEach((b,i)=>rows.push({key:'b'+i,name:b.name,amount:b.amount,obj:b,mine:false}));
+  const sig=rows.map(r=>r.key).join(',');
+  if(force||box.dataset.sig!==sig){
+    box.dataset.sig=sig;
+    box.innerHTML=rows.length?rows.map((r,i)=>
+      '<div class="betrow'+(r.mine?' me':'')+'" data-key="'+r.key+'">'+
+      '<span class="nm">'+esc(r.name)+(r.mine?' <span class="dim">· вы</span>':'')+'</span>'+
+      '<span class="amt">'+money(r.amount)+'</span>'+
+      '<span class="st live">ожидание</span></div>'
+    ).join(''):'<div class="empty">Ставок пока нет</div>';
+  }
+  rows.forEach(r=>{
+    const el=box.querySelector('[data-key="'+r.key+'"]');if(!el) return;
+    const o=r.obj,st=el.querySelector('.st');if(!st) return;
+    let txt,cls;
+    if(o.done && o.winAt){txt='×'+o.winAt.toFixed(2)+' · '+money(o.result);cls='win';}
+    else if(o.done){txt='проигрыш';cls='lose';}
+    else if(G.phase==='betting'){txt='ожидание';cls='live';}
+    else {txt='в игре ×'+G.mult.toFixed(2);cls='live';}
+    if(st.textContent!==txt) st.textContent=txt;
+    st.className='st '+cls;
+  });
+  $('#betsCount').textContent=rows.length?rows.length+' игроков':'';
+}
+function renderHistory(){
+  const box=$('#hist');if(!box) return;
+  box.innerHTML=G.history.map(v=>{
+    const cls=v>=5?'hi':(v>=2?'mid':'');
+    return '<span class="'+cls+'">'+v.toFixed(2)+'×</span>';
+  }).join('');
+}
+function updateStage(){
+  const st=$('#stageState'),mEl=$('#mult');
+  if(G.phase==='betting'){st.textContent='Ставки открыты · '+Math.ceil(G.countdown)+' с';mEl.textContent='1.00×';mEl.className='mult';}
+  else if(G.phase==='running'){st.textContent='Множитель растёт';mEl.className='mult hot';}
+  else {st.textContent='Краш';mEl.textContent=G.mult.toFixed(2)+'×';mEl.className='mult dead';}
+  renderAction();
+}
+function renderAction(){
+  const btn=$('#actionBtn'),hint=$('#betHint');
+  if(!ME) return;
+  let label='Поставить',dis=false;
+  if(G.phase==='betting'){if(G.bet) label='Отменить ставку';else{const a=getAmount();label=a?'Поставить '+money(a):'Поставить';}}
+  else if(G.phase==='running'){
+    if(G.bet && !G.bet.done) label='Забрать '+money(G.bet.amount*G.mult);
+    else if(G.bet && G.bet.winAt){label='Забрано ×'+G.bet.winAt.toFixed(2);dis=true;}
+    else if(G.bet){label='Проиграна';dis=true;}
+    else {label='Раунд идёт';dis=true;}
+  } else {
+    if(G.bet && G.bet.winAt) label='Забрано '+money(G.bet.result);
+    else if(G.bet) label='Краш';
+    else label='Ожидание';
+    dis=true;
+  }
+  btn.textContent=label;btn.disabled=dis;
+  hint.textContent='Пробел — поставить / забрать';
+}
+function getAmount(){const v=parseFloat($('#betAmount').value);return isFinite(v)&&v>0?Math.round(v*100)/100:0;}
+function placeBet(amount){
+  if(!ME) return false;
+  if(ME.banned){toast('Аккаунт заблокирован');return false;}
+  if(G.phase!=='betting'){toast('Ставки закрыты');return false;}
+  if(G.bet){toast('Ставка уже сделана');return false;}
+  amount=amount||getAmount();
+  if(!amount){toast('Введите сумму');return false;}
+  if(amount>ME.balance){toast('Недостаточно средств');return false;}
+  ME.balance=Math.round((ME.balance-amount)*100)/100;
+  ME.stats.bets=(ME.stats.bets||0)+1;
+  ME.stats.turnover=(ME.stats.turnover||0)+amount;
+  ME.wagered=(ME.wagered||0)+amount;
+  G.bet={amount,done:false,lost:false,winAt:0,result:0};
+  addTx('bet',-amount,'ставка');
+  save();renderBalance();renderWallet();renderBets(true);renderAction();sfx('bet');
+  return true;
+}
+function cancelBet(){
+  if(!ME||!G.bet||G.bet.done||G.phase!=='betting') return;
+  ME.balance=Math.round((ME.balance+G.bet.amount)*100)/100;
+  ME.wagered=Math.max(0,(ME.wagered||0)-G.bet.amount);
+  ME.stats.turnover=Math.max(0,(ME.stats.turnover||0)-G.bet.amount);
+  ME.stats.bets=Math.max(0,(ME.stats.bets||0)-1);
+  G.bet=null;
+  save();renderBalance();renderWallet();renderBets(true);renderAction();
+}
+function cashOut(atMult){
+  if(!ME||!G.bet||G.bet.done||G.phase!=='running') return;
+  const m=atMult||G.mult,win=Math.round(G.bet.amount*m*100)/100;
+  G.bet.done=true;G.bet.winAt=m;G.bet.result=win;
+  ME.balance=Math.round((ME.balance+win)*100)/100;
+  ME.stats.wins=(ME.stats.wins||0)+1;
+  if(m>(ME.stats.best||0)) ME.stats.best=Math.round(m*100)/100;
+  addTx('win',win,'выигрыш ×'+m.toFixed(2));
+  spawnBurst(G.lastHead?G.lastHead.x:0,G.lastHead?G.lastHead.y:0,20,.8,[[126,212,238],[255,255,255]]);
+  popFloat('+'+money(win));
+  save();renderBalance();renderWallet();renderBets(false);renderAction();sfx('win');
+}
+function popFloat(text){
+  const layer=$('#popLayer');if(!layer) return;
+  const d=document.createElement('div');
+  d.className='pop';d.textContent=text;
+  d.style.left=(28+Math.random()*38)+'%';
+  layer.appendChild(d);
+  const a=d.animate([
+    {transform:'translate(-50%,0)',opacity:0},
+    {transform:'translate(-50%,-25px)',opacity:1,offset:.3},
+    {transform:'translate(-50%,-70px)',opacity:0}
+  ],{duration:1400,easing:'cubic-bezier(.4,0,.2,1)'});
+  a.onfinish=()=>d.remove();
+}
+$('#actionBtn').onclick=()=>{
+  if(G.phase==='betting'){if(G.bet) cancelBet();else placeBet();}
+  else if(G.phase==='running' && G.bet && !G.bet.done) cashOut();
+};
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-amt]');if(!b) return;
+  $('#betAmount').value=b.dataset.amt;renderAction();
+});
+$('#halfBtn').onclick=()=>{const a=getAmount();if(a){$('#betAmount').value=Math.max(1,Math.round(a/2));renderAction();}};
+$('#maxBtn').onclick=()=>{if(ME){$('#betAmount').value=Math.floor(ME.balance);renderAction();}};
+$('#betAmount').addEventListener('input',renderAction);
+document.addEventListener('keydown',e=>{
+  if(e.code!=='Space') return;
+  const tag=(document.activeElement?.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  if($('#app').hidden || $('#view-game').hidden) return;
+  e.preventDefault();$('#actionBtn').click();
+});
+
+/* ==== КОШЕЛЁК И ЗАЯВКИ ==== */
+const TX_LABEL={deposit:'Пополнение',withdraw:'Вывод',bet:'Ставка',win:'Выигрыш',adj:'Корректировка'};
+const REQ_LABEL={deposit:'Пополнение',withdraw:'Вывод'};
+const REQ_STATUS={pending:'Ожидает',approved:'Одобрено',rejected:'Отклонено'};
+
+function renderWallet(){
+  if(!ME) return;
+  $('#walletBalance').textContent=money(ME.balance);
+  const need=ME.wagerNeeded||0,done=ME.wagered||0;
+  const pct=need>0?Math.min(100,done/need*100):100;
+  $('#wagerBar').style.width=pct.toFixed(1)+'%';
+  $('#wagerTxt').textContent=need>0?(money(Math.min(done,need))+' / '+money(need)):'выполнено';
+  $('#wagerNote').textContent=need>0?(done>=need?'Оборот выполнен':'Осталось '+money(need-done)):'Требований нет';
+  $('#reqBox').textContent=db.cfg.requisites||'—';
+  const mineTx=db.tx.filter(t=>t.userId===ME.id).slice(0,60);
+  $('#txList').innerHTML=mineTx.length?mineTx.map(t=>{
+    const sign=t.amount>=0?'+'+money(t.amount):'−'+money(Math.abs(t.amount));
+    return '<div class="tx"><span class="dim tiny">'+fmtDate(t.at)+'</span>'+
+      '<span>'+esc(TX_LABEL[t.kind]||t.kind)+(t.note?' <span class="dim tiny">'+esc(t.note)+'</span>':'')+'</span>'+
+      '<span class="amt '+(t.amount>=0?'plus':'minus')+'">'+sign+'</span></div>';
+  }).join(''):'<div class="empty">Пока пусто</div>';
+  renderMyRequests();
+}
+function renderMyRequests(){
+  const box=$('#paymentsList');if(!box||!ME) return;
+  const mine=db.requests.filter(r=>r.userId===ME.id).sort((a,b)=>b.at-a.at);
+  box.innerHTML=mine.length?mine.map(r=>{
+    const statusCls=r.status==='approved'?'ok':(r.status==='rejected'?'bad':'wait');
+    let extra='';
+    if(r.status==='pending' && r.adminRequisites){
+      extra='<div class="rc-meta" style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.1)"><b>Реквизиты от админа:</b><br><span style="white-space:pre-wrap">'+esc(r.adminRequisites)+'</span></div>';
+    }
+    if(r.status==='rejected' && r.adminNote) extra='<div class="rc-meta" style="margin-top:6px;color:var(--red)">Причина: '+esc(r.adminNote)+'</div>';
+    return '<div class="req-card '+r.status+'">'+
+      '<div class="rc-head"><span class="rc-title">'+REQ_LABEL[r.type]+' · '+money(r.amount)+'</span><span class="pill '+statusCls+'">'+REQ_STATUS[r.status]+'</span></div>'+
+      '<div class="rc-meta">'+fmtDate(r.at)+'<br>Банк: <b>'+esc(r.bank)+'</b><br>Карта: <b>'+esc(r.card)+'</b></div>'+
+      extra+'</div>';
+  }).join(''):'<div class="empty">Заявок нет</div>';
+}
+$('#depBtn').onclick=()=>{
+  if(!ME) return;
+  const amt=Math.round(Number($('#depAmt').value)||0);
+  if(amt<db.cfg.minDep) return toast('Минимум '+money(db.cfg.minDep));
+  const bank=$('#depBank').value.trim(),card=$('#depCard').value.trim();
+  if(!bank||!card) return toast('Заполните банк и карту');
+  const r={id:'r'+Math.random().toString(36).slice(2,8),userId:ME.id,login:ME.login,nick:ME.nick,type:'deposit',amount:amt,bank,card,status:'pending',at:Date.now(),adminRequisites:'',adminNote:''};
+  db.requests.unshift(r);
+  save();renderWallet();updateAdminBadge();
+  toast('Заявка создана. Ожидайте реквизиты от администратора.');
+};
+$('#wdBtn').onclick=()=>{
+  if(!ME) return;
+  const amt=Math.round(Number($('#wdAmt').value)||0);
+  if(amt<db.cfg.minWd) return toast('Минимум '+money(db.cfg.minWd));
+  if(amt>ME.balance) return toast('Недостаточно средств');
+  if((ME.wagerNeeded||0)>0 && (ME.wagered||0)<ME.wagerNeeded) return toast('Необходимо отыграть оборот');
+  const bank=$('#wdBank').value.trim(),card=$('#wdCard').value.trim();
+  if(!bank||!card) return toast('Заполните банк и карту');
+  ME.balance=Math.round((ME.balance-amt)*100)/100;
+  ME.wagered=0;ME.wagerNeeded=0;
+  addTx('withdraw',-amt,'заявка на вывод');
+  const r={id:'r'+Math.random().toString(36).slice(2,8),userId:ME.id,login:ME.login,nick:ME.nick,type:'withdraw',amount:amt,bank,card,status:'pending',at:Date.now(),adminRequisites:'',adminNote:''};
+  db.requests.unshift(r);
+  save();renderBalance();renderWallet();updateAdminBadge();
+  toast('Заявка на вывод создана. Админ переведёт и закроет её.');
+};
+
+/* ==== ПОДДЕРЖКА ==== */
+let openTicket=null;
+function renderSupport(){
+  if(!ME) return;
+  const mine=db.tickets.filter(t=>t.userId===ME.id).sort((a,b)=>b.at-a.at);
+  $('#supportList').innerHTML=mine.length?mine.map(t=>
+    '<div class="tk'+(openTicket===t.id?' on':'')+'" data-tk="'+t.id+'">'+
+    '<div class="row between"><span>'+esc(t.subject)+'</span>'+
+    '<span class="pill'+(t.status==='closed'?' off':'ok')+'">'+(t.status==='closed'?'Закрыто':'Открыто')+'</span></div>'+
+    '<div class="tiny dim" style="margin-top:4px">'+fmtDate(t.at)+'</div></div>'
+  ).join(''):'<div class="empty">Обращений нет</div>';
+  const t=openTicket?db.tickets.filter(x=>x.id===openTicket)[0]:null;
+  if(!t){$('#supportThreadPanel').innerHTML='<div class="empty">Выберите обращение</div>';return;}
+  const msgs=t.msgs.map(m=>{
+    const staff=m.who==='staff';
+    return '<div class="msg'+(staff?' staff':'')+'"><div class="who">'+(staff?'Поддержка':'Вы')+' · '+fmtDate(m.at)+'</div>'+esc(m.text)+'</div>';
+  }).join('');
+  const tail=t.status==='closed'?'<div class="tiny dim">Обращение закрыто</div>':
+    '<div class="input-row" style="margin-top:14px"><input class="inp" data-reply="'+t.id+'" placeholder="Сообщение..."><button class="btn primary" data-replybtn="'+t.id+'">Отправить</button></div>';
+  $('#supportThreadPanel').innerHTML='<div class="thread-head">'+esc(t.subject)+'</div><div class="tiny dim" style="margin-top:3px">'+fmtDate(t.at)+'</div>'+
+    '<div class="msgs">'+(msgs||'<div class="empty">Нет сообщений</div>')+'</div>'+tail;
+}
+$('#tkSend').onclick=()=>{
+  if(!ME) return;
+  const s=$('#tkSubject').value.trim(),txt=$('#tkText').value.trim();
+  if(!s||!txt) return toast('Заполните все поля');
+  const t={id:'t'+Math.random().toString(36).slice(2,8),userId:ME.id,nick:ME.nick,subject:s,status:'open',at:Date.now(),msgs:[{who:'user',text:txt,at:Date.now()}]};
+  db.tickets.unshift(t);
+  $('#tkSubject').value='';$('#tkText').value='';
+  openTicket=t.id;
+  save();renderSupport();updateAdminBadge();toast('Обращение отправлено');
+};
+document.addEventListener('click',e=>{
+  const tk=e.target.closest('[data-tk]');if(tk){openTicket=tk.dataset.tk;renderSupport();return;}
+  const rb=e.target.closest('[data-replybtn]');
+  if(rb){
+    const id=rb.dataset.replybtn;
+    const inp=document.querySelector('[data-reply="'+id+'"]');
+    if(!inp||!inp.value.trim()) return;
+    const t=db.tickets.filter(x=>x.id===id)[0];
+    if(t){t.msgs.push({who:'user',text:inp.value.trim(),at:Date.now()});save();renderSupport();updateAdminBadge();}
+  }
+});
+
+/* ==== НАСТРОЙКИ ==== */
+function renderSettings(){
+  if(!ME) return;
+  $('#stNick').value=ME.nick||'';
+  $('#stAnim').checked=!!db.settings.anim;
+  $('#stSound').checked=!!db.settings.sound;
+  const row=$('#avRow');row.innerHTML='';
+  for(let i=0;i<SHADES.length;i++){
+    (function(idx){
+      const b=document.createElement('button');
+      b.className='avatar';b.style.background=SHADES[idx];
+      b.style.outline=(ME.avatar===idx?'2px solid #fff':'1px solid rgba(255,255,255,0.15)');
+      b.style.outlineOffset='2px';
+      b.textContent=(ME.nick||'B').slice(0,1).toUpperCase();
+      b.onclick=()=>{ME.avatar=idx;save();renderSettings();renderBalance();};
+      row.appendChild(b);
+    })(i);
+  }
+  $('#statsBox').innerHTML='Ставок: <b>'+(ME.stats?.bets||0)+'</b><br>Побед: <b>'+(ME.stats?.wins||0)+'</b><br>Оборот: <b>'+money(ME.stats?.turnover||0)+'</b><br>Лучший множитель: <b>×'+fmt(ME.stats?.best||0)+'</b>';
+  const na=$('#navAdmin');if(na) na.hidden=!(ME.role==='admin'||ME.role==='staff');
+}
+$('#stSave').onclick=()=>{
+  if(!ME) return;
+  const nick=$('#stNick').value.trim();
+  if(nick.length<2) return toast('Ник минимум 2');
+  ME.nick=nick;save();renderBalance();renderSettings();toast('Сохранено');
+};
+$('#stChPass').onclick=()=>{
+  if(!ME) return;
+  const cur=$('#stCurPass').value||'',nw=$('#stNewPass').value||'';
+  if(ME.pass!==hash(cur)) return toast('Неверный пароль');
+  if(nw.length<4) return toast('Минимум 4');
+  ME.pass=hash(nw);save();
+  $('#stCurPass').value='';$('#stNewPass').value='';
+  toast('Пароль изменён');
+};
+$('#stAnim').addEventListener('change',()=>{db.settings.anim=$('#stAnim').checked;save();document.body.classList.toggle('no-anim',!db.settings.anim);});
+$('#stSound').addEventListener('change',()=>{db.settings.sound=$('#stSound').checked;save();});
+$('#logoutBtn').onclick=()=>{
+  db.session=null;save();ME=null;
+  $('#app').hidden=true;$('#auth').hidden=false;
+  showAuth();
+};
+
+/* ==== АДМИНКА ==== */
+let adminTab='requests';
+function renderAdmin(){
+  if(!ME||(ME.role!=='admin'&&ME.role!=='staff')) return;
+  const isRoot=ME.role==='admin';
+  $$('#adminTabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===adminTab));
+  const box=$('#adminBody');
+  updateAdminBadge();
+  if(adminTab==='requests'){
+    const reqs=db.requests.slice().sort((a,b)=>{
+      if(a.status==='pending'&&b.status!=='pending') return -1;
+      if(b.status==='pending'&&a.status!=='pending') return 1;
+      return b.at-a.at;
+    });
+    if(!reqs.length){box.innerHTML='<div class="empty">Заявок нет</div>';return;}
+    box.innerHTML=reqs.map(r=>{
+      const statusCls=r.status==='approved'?'ok':(r.status==='rejected'?'bad':'wait');
+      let actions='';
+      if(r.status==='pending'){
+        if(r.type==='deposit'){
+          actions='<button class="mini" data-addr="'+r.id+'">Отправить реквизиты</button> <button class="btn ok" data-approve="'+r.id+'" style="padding:6px 12px;font-size:12px">Подтвердить оплату</button> <button class="mini" data-reject="'+r.id+'">Отклонить</button>';
+        } else {
+          actions='<button class="btn ok" data-approve="'+r.id+'" style="padding:6px 12px;font-size:12px">Выплачено</button> <button class="mini" data-reject="'+r.id+'">Отклонить</button>';
+        }
+      }
+      const adminReq=r.adminRequisites?'<div class="rc-meta" style="margin-top:6px;color:var(--accent-hi)"><b>Отправлены реквизиты:</b><br><span style="white-space:pre-wrap">'+esc(r.adminRequisites)+'</span></div>':'';
+      const adminNote=r.adminNote?'<div class="rc-meta" style="margin-top:6px;color:var(--red)"><b>Причина:</b> '+esc(r.adminNote)+'</div>':'';
+      return '<div class="req-card '+r.status+'">'+
+        '<div class="rc-head"><span class="rc-title">'+REQ_LABEL[r.type]+' · '+money(r.amount)+' <span class="dim tiny">#'+r.id+'</span></span><span class="pill '+statusCls+'">'+REQ_STATUS[r.status]+'</span></div>'+
+        '<div class="rc-meta">Игрок: <b>'+esc(r.nick)+'</b> ('+esc(r.login)+')<br>'+
+        'Дата: '+fmtDate(r.at)+'<br>'+
+        'Банк: <b>'+esc(r.bank)+'</b><br>'+
+        'Карта: <b>'+esc(r.card)+'</b></div>'+
+        adminReq+adminNote+
+        '<div class="rc-actions">'+actions+'</div></div>';
+    }).join('');
+    return;
+  }
+  if(adminTab==='users'){
+    box.innerHTML='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Логин</th><th>Ник</th><th>Роль</th><th>Баланс</th><th>Статус</th><th>Действия</th></tr></thead><tbody>'+
+      db.users.map(u=>{
+        let act='—';
+        if(isRoot&&u.id!==ME.id){
+          act='<button class="mini" data-credit="'+u.id+'">Баланс</button> <button class="mini" data-ban="'+u.id+'">'+(u.banned?'Разблок.':'Блок')+'</button>';
+        }
+        return '<tr><td>'+esc(u.login)+'</td><td>'+esc(u.nick)+'</td><td><span class="pill '+(u.role==='admin'?'info':'')+'">'+esc(u.role)+'</span></td><td>'+money(u.balance)+'</td>'+
+          '<td>'+(u.banned?'<span class="pill bad">Заблокирован</span>':'<span class="pill ok">Активен</span>')+'</td>'+
+          '<td style="white-space:nowrap">'+act+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    return;
+  }
+  if(adminTab==='support'){
+    const tickets=db.tickets.slice().sort((a,b)=>b.at-a.at);
+    const html=tickets.map(t=>{
+      const owner=userById(t.userId);
+      return '<div class="tk'+(openTicket===t.id?' on':'')+'" data-tk="'+t.id+'">'+
+        '<div class="row between"><span>'+esc(t.subject)+'</span><span class="pill'+(t.status==='closed'?' off':'ok')+'">'+(t.status==='closed'?'Закрыто':'Открыто')+'</span></div>'+
+        '<div class="tiny dim" style="margin-top:4px">'+esc(owner?owner.login:'—')+'</div></div>';
+    }).join('');
+    box.innerHTML='<div class="grid2"><div>'+(html||'<div class="empty">Нет обращений</div>')+'</div><div id="adminThread"></div></div>';
+    const cur=openTicket?db.tickets.filter(x=>x.id===openTicket)[0]:null;
+    if(cur){
+      const msgs=cur.msgs.map(m=>{
+        const staff=m.who==='staff';
+        return '<div class="msg'+(staff?' staff':'')+'"><div class="who">'+(staff?'Админ':esc(cur.nick))+' · '+fmtDate(m.at)+'</div>'+esc(m.text)+'</div>';
+      }).join('');
+      const tail=cur.status==='closed'?'<div class="tiny dim">Закрыто</div>':
+        '<div class="input-row" style="margin-top:14px"><input class="inp" data-areply="'+cur.id+'" placeholder="Ответ..."><button class="btn primary" data-areplybtn="'+cur.id+'">Ответить</button><button class="btn" data-aclose="'+cur.id+'">Закрыть</button></div>';
+      $('#adminThread').innerHTML='<div class="thread-head">'+esc(cur.subject)+'</div><div class="tiny dim">'+esc(cur.nick)+'</div><div class="msgs">'+msgs+'</div>'+tail;
+    } else {$('#adminThread').innerHTML='<div class="empty">Выберите обращение</div>';}
+    return;
+  }
+  if(adminTab==='cfg'){
+    if(!isRoot){box.innerHTML='<div class="empty">Доступно только администратору</div>';return;}
+    box.innerHTML='<div class="grid2"><div>'+
+      '<label class="lbl" style="margin-top:0">Мин. пополнение</label><input class="inp" id="cfgMinDep" value="'+db.cfg.minDep+'">'+
+      '<label class="lbl">Мин. вывод</label><input class="inp" id="cfgMinWd" value="'+db.cfg.minWd+'">'+
+      '<label class="lbl">Множитель оборота</label><input class="inp" id="cfgWager" value="'+db.cfg.wagerMult+'">'+
+      '<button class="btn primary w100" id="cfgSave" style="margin-top:14px">Сохранить</button></div>'+
+      '<div><label class="lbl" style="margin-top:0">Реквизиты для оплаты (видны игрокам)</label><textarea class="inp" id="cfgReq" style="min-height:200px">'+esc(db.cfg.requisites)+'</textarea></div></div>';
+    return;
+  }
+}
+$('#adminTabs').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-tab]');if(b){adminTab=b.dataset.tab;openTicket=null;renderAdmin();}
+});
+document.addEventListener('click',e=>{
+  const addr=e.target.closest('[data-addr]');
+  if(addr){
+    const r=db.requests.filter(x=>x.id===addr.dataset.addr)[0];if(!r) return;
+    openModal({title:'Реквизиты для пополнения заявки #'+r.id,
+      body:'<label class="lbl">Куда переводить</label><textarea class="inp" id="modalInput" style="min-height:120px">'+esc(db.cfg.requisites)+'</textarea>',
+      buttons:[{label:'Отмена'},{label:'Отправить',primary:true,onClick:v=>{
+        if(!v||!v.trim()) return false;
+        r.adminRequisites=v.trim();save();renderAdmin();renderMyRequests();toast('Реквизиты отправлены игроку');
+      }}]});
+    return;
+  }
+  const apr=e.target.closest('[data-approve]');
+  if(apr){
+    const r=db.requests.filter(x=>x.id===apr.dataset.approve)[0];if(!r||r.status!=='pending') return;
+    const u=userById(r.userId);if(!u) return toast('Игрок не найден');
+    if(r.type==='deposit'){
+      openModal({title:'Подтвердить пополнение #'+r.id,
+        body:'Начислить <b>'+money(r.amount)+'</b> игроку <b>'+esc(u.nick)+'</b>?',
+        buttons:[{label:'Отмена'},{label:'Начислить',primary:true,onClick:()=>{
+          u.balance=Math.round((u.balance+r.amount)*100)/100;
+          u.wagerNeeded=Math.round(((u.wagerNeeded||0)+r.amount*db.cfg.wagerMult)*100)/100;
+          r.status='approved';
+          db.tx.unshift({id:uid(),userId:u.id,kind:'deposit',amount:r.amount,note:'заявка #'+r.id,at:Date.now()});
+          save();renderAdmin();renderMyRequests();if(ME&&ME.id===u.id){renderBalance();renderWallet();}
+          toast('Пополнение подтверждено');
+        }}]});
+    } else {
+      openModal({title:'Подтвердить вывод #'+r.id,
+        body:'Подтвердите, что выплатили <b>'+money(r.amount)+'</b> на <b>'+esc(r.card)+'</b> ('+esc(r.bank)+'). Средства уже списаны с баланса при создании заявки.',
+        buttons:[{label:'Отмена'},{label:'Выплачено',primary:true,onClick:()=>{
+          r.status='approved';save();renderAdmin();renderMyRequests();toast('Вывод подтверждён');
+        }}]});
+    }
+    return;
+  }
+  const rj=e.target.closest('[data-reject]');
+  if(rj){
+    const r=db.requests.filter(x=>x.id===rj.dataset.reject)[0];if(!r||r.status!=='pending') return;
+    const u=userById(r.userId);
+    openModal({title:'Отклонить заявку #'+r.id,
+      body:'<label class="lbl">Причина (увидит игрок)</label><input class="inp" id="modalInput" placeholder="Например: неверные реквизиты">'+
+        (r.type==='withdraw'?'<div class="tiny dim" style="margin-top:8px">Средства будут возвращены игроку.</div>':''),
+      buttons:[{label:'Отмена'},{label:'Отклонить',danger:true,onClick:v=>{
+        r.status='rejected';r.adminNote=(v||'').trim();
+        if(r.type==='withdraw'&&u){
+          u.balance=Math.round((u.balance+r.amount)*100)/100;
+          db.tx.unshift({id:uid(),userId:u.id,kind:'adj',amount:r.amount,note:'возврат по заявке #'+r.id,at:Date.now()});
+        }
+        save();renderAdmin();renderMyRequests();if(ME&&u&&ME.id===u.id){renderBalance();renderWallet();}
+        toast('Заявка отклонена');
+      }}]});
+    return;
+  }
+  const cr=e.target.closest('[data-credit]');
+  if(cr){
+    const id=cr.dataset.credit;const x=userById(id);if(!x) return;
+    openModal({title:'Изменить баланс: '+x.nick,
+      body:'Текущий: '+money(x.balance)+'<br><label class="lbl">Сумма (+ начислить, − списать)</label><input class="inp" id="modalInput" value="100">',
+      buttons:[{label:'Отмена'},{label:'Применить',primary:true,onClick:v=>{
+        const amt=Number(v);if(!amt) return false;
+        x.balance=Math.round(Math.max(0,x.balance+amt)*100)/100;
+        db.tx.unshift({id:uid(),userId:x.id,kind:'adj',amount:amt,note:'администратор',at:Date.now()});
+        save();renderAdmin();if(ME&&ME.id===x.id){renderBalance();renderWallet();}
+        toast('Баланс изменён');
+      }}]});
+    return;
+  }
+  const bn=e.target.closest('[data-ban]');
+  if(bn){const x=userById(bn.dataset.ban);if(x){x.banned=!x.banned;save();renderAdmin();toast(x.banned?'Заблокирован':'Разблокирован');}return;}
+  const ar=e.target.closest('[data-areplybtn]');
+  if(ar){
+    const id=ar.dataset.areplybtn;const inp=document.querySelector('[data-areply="'+id+'"]');
+    if(!inp||!inp.value.trim()) return;
+    const t=db.tickets.filter(x=>x.id===id)[0];
+    if(t){t.msgs.push({who:'staff',text:inp.value.trim(),at:Date.now()});save();renderAdmin();updateAdminBadge();}
+    return;
+  }
+  const ac=e.target.closest('[data-aclose]');
+  if(ac){const t=db.tickets.filter(x=>x.id===ac.dataset.aclose)[0];if(t){t.status='closed';save();renderAdmin();updateAdminBadge();}return;}
+  const cs=e.target.closest('#cfgSave');
+  if(cs){
+    db.cfg.minDep=Math.max(1,Math.round(Number($('#cfgMinDep').value)||100));
+    db.cfg.minWd=Math.max(1,Math.round(Number($('#cfgMinWd').value)||100));
+    db.cfg.wagerMult=Number($('#cfgWager').value)||2;
+    db.cfg.requisites=$('#cfgReq').value;
+    save();renderAdmin();renderWallet();toast('Настройки сохранены');
+  }
+});
+
+/* ==== СТАРТ ==== */
+window.addEventListener('resize',()=>{if(cv) draw(performance.now());});
+initGlobalBg();
+db=load();
+document.body.classList.toggle('no-anim',!db.settings.anim);
+if(cv) ctx=cv.getContext('2d');
+requestAnimationFrame(loop);
+const sess=db.session?db.users.filter(u=>u.id===db.session)[0]:null;
+if(sess){ME=sess;enterApp();}
+else showAuth();
+
+})();
+</script>
+</body>
+</html>
